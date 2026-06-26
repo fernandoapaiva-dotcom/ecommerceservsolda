@@ -1,0 +1,132 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Role enum simulated in application logic as "CLIENT" or "ADMIN"
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // hashed
+  name      String
+  role      String   @default("CLIENT") // "CLIENT" or "ADMIN"
+  document  String?  // CPF or CNPJ
+  phone     String?
+  address   String?  // Rich/Structured address string or JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+  reviews   Review[]
+}
+
+model Section {
+  id          String    @id @default(uuid())
+  name        String
+  image       String?   // Banner/Cover URL
+  order       Int       @default(0)
+  active      Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  sku          String   @unique
+  name         String
+  price        Float
+  stock        Int      @default(0)
+  description  String   // Rich Text or HTML / commercial description
+  specs        String   // JSON string of key-value pairs
+  status       String   // "ACTIVE", "INACTIVE", "FEATURED"
+  images       String   // JSON string array of photo URLs
+  pdfs         String   // JSON string array of { title, url }
+  videos       String   // JSON string array of { title, url } (YouTube links)
+  metaTitle    String?
+  metaDesc     String?
+  sectionId    String
+  section      Section  @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+  warranty     String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  reviews      Review[]
+}
+
+model Banner {
+  id        String   @id @default(uuid())
+  image     String   // Banner URL
+  link      String?  // Redirect destination
+  title     String?  // Text overlay
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id           String   @id @default(uuid())
+  budgetNumber String   @unique // Auto-generated human friendly budget number (e.g. ORC-YYYYMMDD-XXX)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  items        String   // JSON string of items: [ { sku, name, qty, price, total } ]
+  subtotal     Float
+  total        Float
+  notes        String?
+  pdfPath      String?  // Generated PDF file path / URL
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Config {
+  id                  String   @id @default("singleton")
+  logo                String?  // Logo image path or URL
+  companyName         String   @default("ServoSolda")
+  cnpj                String   @default("")
+  address             String   @default("")
+  phone               String   @default("")
+  whatsappSales       String   @default("") //wa.me destination phone (e.g. 5511999999999)
+  alertEmail          String   @default("")
+  validityDays        Int      @default(5)
+  socialLinks         String   @default("{}") // JSON string of platforms and links
+  footerText          String   @default("ServoSolda © Todos os direitos reservados")
+  workingHours        String   @default("Seg-Sex 08:00 - 18:00")
+  erpUrl              String   @default("")
+  erpToken            String   @default("")
+  erpSyncMinutes      Int      @default(15)
+  themeColors         String   @default("{\"primary\":\"#f59e0b\",\"secondary\":\"#1e293b\",\"accent\":\"#d97706\",\"background\":\"#f8fafc\",\"surface\":\"#ffffff\",\"text\":\"#0f172a\",\"textMuted\":\"#64748b\",\"border\":\"#e2e8f0\"}")
+  pdfNotes            String   @default("")
+  installmentCount    Int      @default(10)
+  installmentInterest Boolean  @default(false)
+  geminiApiKey        String   @default("")
+  geminiModel         String   @default("gemini-2.5-flash")
+  whatsappMessage     String   @default("")
+  smtpHost            String   @default("")
+  smtpPort            Int      @default(587)
+  smtpUser            String   @default("")
+  smtpPass            String   @default("")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int      // 1 to 5
+  comment   String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model SyncLog {
+  id        String   @id @default(uuid())
+  status    String   // "SUCCESS", "FAILED"
+  message   String
+  createdAt DateTime @default(now())
+}
