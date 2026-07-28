@@ -15,6 +15,59 @@ export default function AdminProducts() {
   
   // AI assistant loading state
   const [aiLoading, setAiLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [batchAiLoading, setBatchAiLoading] = useState(false);
+  const [batchAiStatus, setBatchAiStatus] = useState('');
+
+  const handleToggleSelectAll = () => {
+    if (selectedIds.length === products.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(products.map(p => p.id));
+    }
+  };
+
+  const handleToggleSelectOne = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
+  };
+
+  const handleBatchEnrich = async (overrideIds = null) => {
+    const idsToEnrich = overrideIds || (selectedIds.length > 0 ? selectedIds : products.map(p => p.id));
+    if (!idsToEnrich || idsToEnrich.length === 0) {
+      setError('Nenhum produto disponível para enriquecer com IA.');
+      return;
+    }
+
+    setBatchAiLoading(true);
+    setError('');
+    setSuccess('');
+    setBatchAiStatus(`Iniciando enriquecimento por IA para ${idsToEnrich.length} produto(s)... A IA está buscando descrições técnicas, fotos com marca d'água, manuais e vídeos.`);
+
+    try {
+      const res = await fetch('http://localhost:5000/api/ai/batch-enrich', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ productIds: idsToEnrich })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro no processamento da IA');
+      }
+
+      setSuccess(`✨ IA concluiu o enriquecimento! ${data.results.successCount} produto(s) atualizados com descrições técnicas, fotos com marca d'água ServSolda, manuais em PDF e vídeos do YouTube.`);
+      setSelectedIds([]);
+      fetchProducts();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBatchAiLoading(false);
+      setBatchAiStatus('');
+    }
+  };
 
   // Form Mode
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -731,11 +784,50 @@ export default function AdminProducts() {
           </div>
         )}
 
+        {/* Batch AI Progress Status Banner */}
+        {batchAiLoading && (
+          <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl flex items-center justify-between gap-4 animate-pulse">
+            <div className="flex items-center gap-3">
+              <RefreshCw className="w-5 h-5 text-amber-600 animate-spin" />
+              <div>
+                <p className="text-xs font-black text-amber-900 uppercase tracking-wider">Assistente de IA em Execução</p>
+                <p className="text-xs text-amber-700 font-medium">{batchAiStatus}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Products List Panel */}
         {!isFormOpen && (
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 font-bold text-slate-900 text-sm uppercase tracking-wider">
-              Catálogo de Produtos Cadastrados
+            <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider">
+                  Catálogo de Produtos ({products.length})
+                </h3>
+                {selectedIds.length > 0 && (
+                  <p className="text-xs text-amber-700 font-semibold mt-0.5">
+                    {selectedIds.length} produto(s) selecionado(s)
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleBatchEnrich()}
+                  disabled={batchAiLoading || products.length === 0}
+                  className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-black px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                  title="A IA irá pesquisar especificações técnicas, fotos com marca d'água ServSolda, manuais em PDF e vídeos no YouTube"
+                >
+                  <Wand2 size={15} />
+                  <span>
+                    {selectedIds.length > 0
+                      ? `Enriquecer (${selectedIds.length}) com IA`
+                      : 'Enriquecer Todos com IA'}
+                  </span>
+                </button>
+              </div>
             </div>
 
             {loading ? (
@@ -748,47 +840,101 @@ export default function AdminProducts() {
                 <table className="min-w-full divide-y divide-slate-200 text-xs">
                   <thead className="bg-slate-50">
                     <tr>
-                      <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">SKU</th>
-                      <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Produto</th>
-                      <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Preço</th>
-                      <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Estoque</th>
-                      <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-center font-bold text-slate-500 uppercase tracking-wider">Ações</th>
+                      <th className="w-10 px-4 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                          checked={selectedIds.length > 0 && selectedIds.length === products.length}
+                          onChange={handleToggleSelectAll}
+                        />
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">SKU</th>
+                      <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Produto</th>
+                      <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Preço</th>
+                      <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Estoque</th>
+                      <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Conteúdo IA</th>
+                      <th className="px-4 py-3 text-center font-bold text-slate-500 uppercase tracking-wider">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 bg-white">
-                    {products.map(prod => (
-                      <tr key={prod.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap font-bold text-slate-900">{prod.sku}</td>
-                        <td className="px-6 py-4 font-semibold text-slate-800">{prod.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap font-bold text-slate-900">R$ {prod.price.toFixed(2)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-slate-500">{prod.stock} un.</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                            prod.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' :
-                            prod.status === 'FEATURED' ? 'bg-primary/10 text-accent' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {prod.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => handleOpenForm(prod)}
-                            className="p-1.5 bg-primary/5 hover:bg-primary/10 text-accent rounded-lg"
-                            title="Editar"
-                          >
-                            <Edit size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(prod.id)}
-                            className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg"
-                            title="Excluir"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {products.map(prod => {
+                      const hasImages = prod.images && (Array.isArray(prod.images) ? prod.images.length > 0 : JSON.parse(prod.images || '[]').length > 0);
+                      const hasPdfs = prod.pdfs && (Array.isArray(prod.pdfs) ? prod.pdfs.length > 0 : JSON.parse(prod.pdfs || '[]').length > 0);
+                      const hasVideos = prod.videos && (Array.isArray(prod.videos) ? prod.videos.length > 0 : JSON.parse(prod.videos || '[]').length > 0);
+                      const isSelected = selectedIds.includes(prod.id);
+
+                      return (
+                        <tr key={prod.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? 'bg-amber-50/50' : ''}`}>
+                          <td className="w-10 px-4 py-4 text-center">
+                            <input
+                              type="checkbox"
+                              className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                              checked={isSelected}
+                              onChange={() => handleToggleSelectOne(prod.id)}
+                            />
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap font-bold text-slate-900">{prod.sku}</td>
+                          <td className="px-4 py-4 font-semibold text-slate-800">
+                            <div>{prod.name}</div>
+                            {prod.warranty && (
+                              <div className="text-[10px] text-amber-700 font-medium">🛡️ {prod.warranty}</div>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap font-bold text-slate-900">R$ {prod.price.toFixed(2)}</td>
+                          <td className="px-4 py-4 whitespace-nowrap text-slate-500">{prod.stock} un.</td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              {hasImages ? (
+                                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold" title="Imagens com marca d'água anexadas">
+                                  📷 Foto
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-400 text-[10px]" title="Sem imagem">
+                                  📷 Sem Foto
+                                </span>
+                              )}
+                              {hasPdfs && (
+                                <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-[10px] font-bold" title="Manual PDF cadastrado">
+                                  📄 PDF
+                                </span>
+                              )}
+                              {hasVideos && (
+                                <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 text-[10px] font-bold" title="Vídeo do YouTube cadastrado">
+                                  ▶️ Vídeo
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => handleBatchEnrich([prod.id])}
+                                disabled={batchAiLoading}
+                                className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg font-bold flex items-center gap-1 text-[11px]"
+                                title="Enriquecer este produto com IA"
+                              >
+                                <Wand2 size={14} />
+                                <span>IA</span>
+                              </button>
+                              <button
+                                onClick={() => handleOpenForm(prod)}
+                                className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg"
+                                title="Editar"
+                              >
+                                <Edit size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(prod.id)}
+                                className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg"
+                                title="Excluir"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

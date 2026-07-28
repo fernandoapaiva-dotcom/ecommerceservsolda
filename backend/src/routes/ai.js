@@ -159,45 +159,37 @@ async function validatePdfUrl(url, title) {
   return null;
 }
 
-// Gemini description generation route
-router.post('/generate-description', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    let { productName, productUrl } = req.body;
-    if (!productName) {
-      return res.status(400).json({ error: 'O nome do produto é obrigatório para gerar a descrição.' });
-    }
+// Core reusable helper to enrich a product via Gemini with Google Search Grounding
+async function processProductEnrichment(productName, productUrl = '') {
+  const config = await prisma.config.findUnique({ where: { id: 'singleton' } });
+  const apiKey = config ? config.geminiApiKey : '';
+  const geminiModel = config ? config.geminiModel : 'gemini-2.5-flash';
+  const logoRelativePath = config ? config.logo : null;
 
-    const config = await prisma.config.findUnique({ where: { id: 'singleton' } });
-    const apiKey = config ? config.geminiApiKey : '';
-    const geminiModel = config ? config.geminiModel : 'gemini-2.5-flash';
-    const logoRelativePath = config ? config.logo : null;
+  if (!apiKey) {
+    throw new Error('Chave de API do Gemini não configurada no servidor. Por favor, adicione-a no painel administrativo.');
+  }
 
-    if (!apiKey) {
-      return res.status(400).json({ 
-        error: 'Chave de API do Gemini não configurada no servidor. Por favor, adicione-a no painel administrativo.' 
-      });
-    }
+  // Fetch existing active categories to pass to Gemini
+  const existingSections = await prisma.section.findMany({
+    where: { active: true },
+    include: { parent: true }
+  });
 
-    // Fetch existing active categories to pass to Gemini
-    const existingSections = await prisma.section.findMany({
-      where: { active: true },
-      include: { parent: true }
-    });
+  const categoriesList = existingSections.map(s => ({
+    id: s.id,
+    name: s.parent ? `${s.name} (Subcategoria de ${s.parent.name})` : s.name
+  }));
 
-    const categoriesList = existingSections.map(s => ({
-      id: s.id,
-      name: s.parent ? `${s.name} (Subcategoria de ${s.parent.name})` : s.name
-    }));
+  const genAI = new GoogleGenerativeAI(apiKey);
+  
+  // Define a model with Google Search Grounding enabled to bypass WAF blocks and fetch veridic web results autonomously
+  const model = genAI.getGenerativeModel({ 
+    model: geminiModel,
+    tools: [{ googleSearch: {} }]
+  });
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // Define a model with Google Search Grounding enabled to bypass WAF blocks and fetch veridic web results autonomously
-    const model = genAI.getGenerativeModel({ 
-      model: geminiModel,
-      tools: [{ googleSearch: {} }]
-    });
-
-    const prompt = `Você é um assistente especialista de e-commerce da ServSolda.
+  const prompt = `Você é um assistente especialista de e-commerce da ServSolda.
 Sua tarefa é analisar as informações sobre o produto de soldagem: "${productName}".
 
 Você DEVE utilizar a ferramenta de busca integrada (Google Search) para obter informações reais e verídicas sobre o produto na internet.
@@ -236,158 +228,230 @@ JSON esperado:
   "warranty": "..."
 }`;
 
-    console.log(`Sending search-grounded request to Gemini for product: ${productName}`);
-    let text = '';
+  console.log(`Sending search-grounded request to Gemini for product: ${productName}`);
+  let text = '';
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    text = response.text();
+  } catch (apiErr) {
+    console.warn(`Gemini primary model failed: ${apiErr.message}. Attempting retry with gemini-1.5-flash with search tool...`);
     try {
-      const result = await model.generateContent(prompt);
+      const fallbackModel = genAI.getGenerativeModel({ 
+        model: 'gemini-1.5-flash',
+        tools: [{ googleSearch: {} }]
+      });
+      const result = await fallbackModel.generateContent(prompt);
       const response = await result.response;
       text = response.text();
-    } catch (apiErr) {
-      console.warn(`Gemini primary model failed: ${apiErr.message}. Attempting retry with gemini-1.5-flash with search tool...`);
+    } catch (fallbackErr) {
+      console.warn(`Gemini fallback model with search failed: ${fallbackErr.message}. Retrying WITHOUT Google Search tool...`);
       try {
-        const fallbackModel = genAI.getGenerativeModel({ 
-          model: 'gemini-1.5-flash',
-          tools: [{ googleSearch: {} }]
+        const noSearchModel = genAI.getGenerativeModel({ 
+          model: geminiModel
         });
-        const result = await fallbackModel.generateContent(prompt);
+        const result = await noSearchModel.generateContent(prompt + "\nImportante: Como o serviço de busca externa está indisponível, responda usando apenas o seu conhecimento prévio verídico sobre o produto.");
         const response = await result.response;
         text = response.text();
-      } catch (fallbackErr) {
-        console.warn(`Gemini fallback model with search failed: ${fallbackErr.message}. Retrying WITHOUT Google Search tool...`);
-        try {
-          // Attempt without search grounding tool to bypass Google Search tool quota limit/overload
-          const noSearchModel = genAI.getGenerativeModel({ 
-            model: geminiModel
-          });
-          const result = await noSearchModel.generateContent(prompt + "\nImportante: Como o serviço de busca externa está indisponível, responda usando apenas o seu conhecimento prévio verídico sobre o produto.");
-          const response = await result.response;
-          text = response.text();
-        } catch (noSearchErr) {
-          console.error(`All Gemini model attempts failed: ${noSearchErr.message}`);
-          throw new Error(`O serviço da IA do Gemini está temporariamente sobrecarregado (Erro 503). Por favor, tente novamente em alguns instantes.`);
+      } catch (noSearchErr) {
+        console.error(`All Gemini model attempts failed: ${noSearchErr.message}`);
+        throw new Error(`O serviço da IA do Gemini está temporariamente sobrecarregado (Erro 503). Por favor, tente novamente em alguns instantes.`);
+      }
+    }
+  }
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error("Resposta do Gemini não contém JSON estruturado válido.");
+  }
+
+  const parsedResult = JSON.parse(jsonMatch[0]);
+
+  // Verify that the chosen sectionId actually exists in the database
+  let recommendedSectionId = undefined;
+  if (parsedResult.sectionId) {
+    const sectionExists = await prisma.section.findUnique({
+      where: { id: parsedResult.sectionId }
+    });
+    if (sectionExists) {
+      recommendedSectionId = parsedResult.sectionId;
+    }
+  }
+  parsedResult.sectionId = recommendedSectionId;
+
+  // Deduce manufacturer fallback pages for this brand
+  let brandManualFallback = 'https://www.google.com';
+  let brandVideoFallback = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+  const nameLower = productName.toLowerCase();
+  if (nameLower.includes('esab') || nameLower.includes('rogue') || nameLower.includes('lhn')) {
+    brandManualFallback = 'https://manuals.esab.com/';
+    brandVideoFallback = 'https://www.youtube.com/watch?v=K4eMsEPT1-A';
+  } else if (nameLower.includes('vonder')) {
+    brandManualFallback = 'https://www.vonder.com.br/manuais';
+    brandVideoFallback = 'https://www.youtube.com/user/vonderferramentas';
+  } else if (nameLower.includes('balmer')) {
+    brandManualFallback = 'http://www.balmer.com.br/manuais/';
+    brandVideoFallback = 'https://www.youtube.com/channel/UCf1o6m5YVvO5lBskq6C1Y_A';
+  }
+
+  // Resolve any Google search redirects in the recommended lists first
+  if (parsedResult.recommendedImages && Array.isArray(parsedResult.recommendedImages)) {
+    for (let i = 0; i < parsedResult.recommendedImages.length; i++) {
+      parsedResult.recommendedImages[i] = await resolveRedirectUrl(parsedResult.recommendedImages[i]);
+    }
+  }
+  if (parsedResult.recommendedPdfs && Array.isArray(parsedResult.recommendedPdfs)) {
+    for (let i = 0; i < parsedResult.recommendedPdfs.length; i++) {
+      if (parsedResult.recommendedPdfs[i].url) {
+        parsedResult.recommendedPdfs[i].url = await resolveRedirectUrl(parsedResult.recommendedPdfs[i].url);
+      }
+    }
+  }
+  if (parsedResult.recommendedVideos && Array.isArray(parsedResult.recommendedVideos)) {
+    for (let i = 0; i < parsedResult.recommendedVideos.length; i++) {
+      if (parsedResult.recommendedVideos[i].url) {
+        parsedResult.recommendedVideos[i].url = await resolveRedirectUrl(parsedResult.recommendedVideos[i].url);
+      }
+    }
+  }
+
+  // Process images: download, apply store watermark, and save locally
+  const watermarkedImages = [];
+  if (parsedResult.recommendedImages && Array.isArray(parsedResult.recommendedImages)) {
+    for (const imgUrl of parsedResult.recommendedImages) {
+      if (imgUrl && imgUrl.startsWith('http')) {
+        console.log(`Downloading and applying watermark to image: ${imgUrl}`);
+        const localPath = await downloadAndWatermark(imgUrl, logoRelativePath);
+        if (localPath) {
+          watermarkedImages.push(`http://localhost:5000${localPath}`);
+        } else {
+          console.log(`Watermark failed or blocked. Falling back to remote URL: ${imgUrl}`);
+          watermarkedImages.push(imgUrl);
         }
       }
     }
-    console.log('Gemini raw response:', text);
+  }
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Resposta do Gemini não contém JSON estruturado válido.");
-    }
-
-    const parsedResult = JSON.parse(jsonMatch[0]);
-
-    // Verify that the chosen sectionId actually exists in the database
-    let recommendedSectionId = undefined;
-    if (parsedResult.sectionId) {
-      const sectionExists = await prisma.section.findUnique({
-        where: { id: parsedResult.sectionId }
-      });
-      if (sectionExists) {
-        recommendedSectionId = parsedResult.sectionId;
+  // Validate and clean up PDFs
+  const validPdfs = [];
+  if (parsedResult.recommendedPdfs && Array.isArray(parsedResult.recommendedPdfs)) {
+    for (const pdfItem of parsedResult.recommendedPdfs) {
+      const validated = await validatePdfUrl(pdfItem.url, pdfItem.title);
+      if (validated) {
+        validPdfs.push(validated);
       }
     }
-    parsedResult.sectionId = recommendedSectionId;
+  }
+  if (validPdfs.length === 0) {
+    validPdfs.push({
+      title: `Página Oficial de Manuais e Downloads ${productName.includes('ESAB') ? 'ESAB' : 'do Fabricante'}`,
+      url: brandManualFallback
+    });
+  }
 
-    // Deduce manufacturer fallback pages for this brand
-    let brandManualFallback = 'https://www.google.com';
-    let brandVideoFallback = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'; // Rickroll or generic
-    const nameLower = productName.toLowerCase();
-    if (nameLower.includes('esab') || nameLower.includes('rogue') || nameLower.includes('lhn')) {
-      brandManualFallback = 'https://manuals.esab.com/';
-      brandVideoFallback = 'https://www.youtube.com/watch?v=K4eMsEPT1-A'; // Real active BrazilWelds Rogue video!
-    } else if (nameLower.includes('vonder')) {
-      brandManualFallback = 'https://www.vonder.com.br/manuais';
-      brandVideoFallback = 'https://www.youtube.com/user/vonderferramentas';
-    } else if (nameLower.includes('balmer')) {
-      brandManualFallback = 'http://www.balmer.com.br/manuais/';
-      brandVideoFallback = 'https://www.youtube.com/channel/UCf1o6m5YVvO5lBskq6C1Y_A';
-    }
-
-    // Resolve any Google search redirects in the recommended lists first
-    if (parsedResult.recommendedImages && Array.isArray(parsedResult.recommendedImages)) {
-      for (let i = 0; i < parsedResult.recommendedImages.length; i++) {
-        parsedResult.recommendedImages[i] = await resolveRedirectUrl(parsedResult.recommendedImages[i]);
+  // Validate and clean up YouTube videos
+  const validVideos = [];
+  if (parsedResult.recommendedVideos && Array.isArray(parsedResult.recommendedVideos)) {
+    for (const vidItem of parsedResult.recommendedVideos) {
+      const validated = await validateYoutubeVideo(vidItem.url, vidItem.title);
+      if (validated) {
+        validVideos.push(validated);
       }
     }
-    if (parsedResult.recommendedPdfs && Array.isArray(parsedResult.recommendedPdfs)) {
-      for (let i = 0; i < parsedResult.recommendedPdfs.length; i++) {
-        if (parsedResult.recommendedPdfs[i].url) {
-          parsedResult.recommendedPdfs[i].url = await resolveRedirectUrl(parsedResult.recommendedPdfs[i].url);
-        }
-      }
-    }
-    if (parsedResult.recommendedVideos && Array.isArray(parsedResult.recommendedVideos)) {
-      for (let i = 0; i < parsedResult.recommendedVideos.length; i++) {
-        if (parsedResult.recommendedVideos[i].url) {
-          parsedResult.recommendedVideos[i].url = await resolveRedirectUrl(parsedResult.recommendedVideos[i].url);
-        }
-      }
+  }
+  if (validVideos.length === 0) {
+    validVideos.push({
+      title: `Vídeo de Apresentação Oficial da Linha ${productName.includes('ESAB') ? 'ESAB Rogue' : 'do Fabricante'}`,
+      url: brandVideoFallback
+    });
+  }
+
+  parsedResult.images = watermarkedImages;
+  parsedResult.pdfs = validPdfs;
+  parsedResult.videos = validVideos;
+
+  return parsedResult;
+}
+
+// Gemini description generation route (single product edit modal)
+router.post('/generate-description', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    let { productName, productUrl } = req.body;
+    if (!productName) {
+      return res.status(400).json({ error: 'O nome do produto é obrigatório para gerar a descrição.' });
     }
 
-    // Process images: download, apply store watermark, and save locally
-    const watermarkedImages = [];
-    if (parsedResult.recommendedImages && Array.isArray(parsedResult.recommendedImages)) {
-      for (const imgUrl of parsedResult.recommendedImages) {
-        if (imgUrl && imgUrl.startsWith('http')) {
-          console.log(`Downloading and applying watermark to image: ${imgUrl}`);
-          const localPath = await downloadAndWatermark(imgUrl, logoRelativePath);
-          if (localPath) {
-            watermarkedImages.push(`http://localhost:5000${localPath}`);
-          } else {
-            console.log(`Watermark failed or blocked. Falling back to remote URL: ${imgUrl}`);
-            watermarkedImages.push(imgUrl);
-          }
-        }
-      }
-    }
-
-    // Validate and clean up PDFs
-    const validPdfs = [];
-    if (parsedResult.recommendedPdfs && Array.isArray(parsedResult.recommendedPdfs)) {
-      for (const pdfItem of parsedResult.recommendedPdfs) {
-        const validated = await validatePdfUrl(pdfItem.url, pdfItem.title);
-        if (validated) {
-          validPdfs.push(validated);
-        }
-      }
-    }
-    // Fallback if no valid direct PDF was found
-    if (validPdfs.length === 0) {
-      validPdfs.push({
-        title: `Página Oficial de Manuais e Downloads ${productName.includes('ESAB') ? 'ESAB' : 'do Fabricante'}`,
-        url: brandManualFallback
-      });
-    }
-
-    // Validate and clean up YouTube videos
-    const validVideos = [];
-    if (parsedResult.recommendedVideos && Array.isArray(parsedResult.recommendedVideos)) {
-      for (const vidItem of parsedResult.recommendedVideos) {
-        const validated = await validateYoutubeVideo(vidItem.url, vidItem.title);
-        if (validated) {
-          validVideos.push(validated);
-        }
-      }
-    }
-    // Fallback if no valid direct YouTube video was found
-    if (validVideos.length === 0) {
-      validVideos.push({
-        title: `Vídeo de Apresentação Oficial da Linha ${productName.includes('ESAB') ? 'ESAB Rogue' : 'do Fabricante'}`,
-        url: brandVideoFallback
-      });
-    }
-
-    // Append localized watermarked images, PDFs and videos to the final API response
-    parsedResult.images = watermarkedImages;
-    parsedResult.pdfs = validPdfs;
-    parsedResult.videos = validVideos;
-
-    return res.json(parsedResult);
+    const result = await processProductEnrichment(productName, productUrl);
+    return res.json(result);
 
   } catch (error) {
     console.error('Erro na geração por IA (Gemini):', error.message);
     return res.status(500).json({ error: `Erro ao gerar descrição com Gemini: ${error.message}` });
+  }
+});
+
+// POST /api/ai/batch-enrich - Processa enriquece vários produtos em lote
+router.post('/batch-enrich', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    req.setTimeout(600000); // 10 minutos para lotes grandes
+    const { productIds } = req.body;
+    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ error: 'Forneça um array de IDs de produtos para enriquecer.' });
+    }
+
+    const results = {
+      total: productIds.length,
+      successCount: 0,
+      failedCount: 0,
+      details: []
+    };
+
+    for (const id of productIds) {
+      try {
+        const product = await prisma.product.findUnique({ where: { id } });
+        if (!product) {
+          results.failedCount++;
+          results.details.push({ id, status: 'error', error: 'Produto não encontrado' });
+          continue;
+        }
+
+        console.log(`[Batch AI Enrich] Processando produto (${product.name})...`);
+        const enriched = await processProductEnrichment(product.name, null);
+
+        const updateData = {};
+        if (enriched.description) updateData.description = enriched.description;
+        if (enriched.specs) updateData.specs = JSON.stringify(enriched.specs);
+        if (enriched.metaTitle) updateData.metaTitle = enriched.metaTitle;
+        if (enriched.metaDescription) updateData.metaDesc = enriched.metaDescription;
+        if (enriched.warranty) updateData.warranty = enriched.warranty;
+        if (enriched.sectionId) updateData.sectionId = enriched.sectionId;
+        if (enriched.images && enriched.images.length > 0) updateData.images = JSON.stringify(enriched.images);
+        if (enriched.pdfs && enriched.pdfs.length > 0) updateData.pdfs = JSON.stringify(enriched.pdfs);
+        if (enriched.videos && enriched.videos.length > 0) updateData.videos = JSON.stringify(enriched.videos);
+
+        await prisma.product.update({
+          where: { id },
+          data: updateData
+        });
+
+        results.successCount++;
+        results.details.push({ id, name: product.name, status: 'success' });
+
+      } catch (itemErr) {
+        console.error(`[Batch AI Enrich Error] Produto ID ${id}:`, itemErr.message);
+        results.failedCount++;
+        results.details.push({ id, status: 'error', error: itemErr.message });
+      }
+    }
+
+    return res.json({
+      message: `Enriquecimento por IA concluído: ${results.successCount} atualizados com sucesso, ${results.failedCount} falhas.`,
+      results
+    });
+
+  } catch (error) {
+    console.error('Erro no processamento em lote da IA:', error.message);
+    return res.status(500).json({ error: `Erro no processamento em lote da IA: ${error.message}` });
   }
 });
 
