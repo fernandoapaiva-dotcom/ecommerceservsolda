@@ -411,6 +411,7 @@ export default function ProductDetail() {
                     : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(product.name)}`;
 
                   return (
+                    <div key={idx} className="space-y-3 bg-slate-50 p-4 border border-slate-200 rounded-2xl">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-red-600"></span>
