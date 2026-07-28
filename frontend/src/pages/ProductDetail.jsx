@@ -96,7 +96,7 @@ export default function ProductDetail() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4 text-slate-400">
-        <RefreshCw size={40} className="animate-spin text-amber-500" />
+        <RefreshCw size={40} className="animate-spin text-primary" />
         <p className="text-sm font-semibold">Carregando detalhes do produto...</p>
       </div>
     );
@@ -107,7 +107,7 @@ export default function ProductDetail() {
       <div className="max-w-7xl mx-auto px-4 py-20 text-center space-y-4">
         <h2 className="text-2xl font-bold text-slate-800">Produto não encontrado</h2>
         <p className="text-sm text-slate-500">O produto com SKU {sku} não existe ou foi removido do catálogo.</p>
-        <Link to="/produtos" className="inline-block bg-amber-500 text-slate-900 font-bold px-6 py-2.5 rounded-full text-sm">
+        <Link to="/produtos" className="inline-block bg-primary/50 text-slate-900 font-bold px-6 py-2.5 rounded-full text-sm">
           Voltar ao Catálogo
         </Link>
       </div>
@@ -135,7 +135,7 @@ export default function ProductDetail() {
       "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       "seller": {
         "@type": "Organization",
-        "name": "ServoSolda"
+        "name": "ServSolda"
       }
     }
   };
@@ -145,8 +145,8 @@ export default function ProductDetail() {
       
       {/* Dynamic SEO Head Tags */}
       <Helmet>
-        <title>{product.metaTitle || `${product.name} | ServoSolda`}</title>
-        <meta name="description" content={product.metaDesc || `Adquira ${product.name} na ServoSolda. Preços especiais para faturamento B2B.`} />
+        <title>{product.metaTitle || `${product.name} | ServSolda`}</title>
+        <meta name="description" content={product.metaDesc || `Adquira ${product.name} na ServSolda. Preços especiais para faturamento B2B.`} />
         <meta property="og:title" content={product.metaTitle || product.name} />
         <meta property="og:description" content={product.metaDesc || product.name} />
         {images[0] && <meta property="og:image" content={images[0]} />}
@@ -158,11 +158,11 @@ export default function ProductDetail() {
         
         {/* Gallery */}
         <div className="space-y-4">
-          <div className="aspect-video w-full bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative">
+          <div className="aspect-square w-full md:h-96 bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative flex items-center justify-center">
             <img
               src={images[activeImageIdx] || 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80'}
               alt={product.name}
-              className="w-full h-full object-cover transition-all duration-300"
+              className="max-w-full max-h-full object-contain transition-all duration-300 p-4"
             />
             {product.stock <= 0 && (
               <div className="absolute top-4 left-4 bg-red-600 text-white text-xs font-black tracking-widest px-3 py-1 rounded-full uppercase shadow">
@@ -178,9 +178,9 @@ export default function ProductDetail() {
                 <button
                   key={idx}
                   onClick={() => setActiveImageIdx(idx)}
-                  className={`aspect-video w-24 bg-slate-100 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${activeImageIdx === idx ? 'border-amber-500' : 'border-slate-200'}`}
+                  className={`w-16 h-16 bg-white rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 flex items-center justify-center p-1 ${activeImageIdx === idx ? 'border-primary' : 'border-slate-200'}`}
                 >
-                  <img src={img} alt={`thumbnail-${idx}`} className="w-full h-full object-cover" />
+                  <img src={img} alt={`thumbnail-${idx}`} className="max-w-full max-h-full object-contain" />
                 </button>
               ))}
             </div>
@@ -248,7 +248,7 @@ export default function ProductDetail() {
                 className={`flex-1 flex items-center justify-center gap-2 font-bold text-sm px-6 py-3 rounded-xl transition-all shadow-md ${
                   successAdded 
                     ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
-                    : 'bg-amber-500 hover:bg-amber-600 text-slate-900 hover:shadow-amber-500/10'
+                    : 'bg-primary hover:bg-accent text-slate-900 hover:shadow-primary/10'
                 }`}
               >
                 {successAdded ? (
@@ -289,37 +289,37 @@ export default function ProductDetail() {
         <div className="flex border-b border-slate-200 overflow-x-auto gap-2">
           <button
             onClick={() => setActiveTab('description')}
-            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'description' ? 'border-amber-500 text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'description' ? 'border-primary text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
           >
             Descrição
           </button>
           <button
             onClick={() => setActiveTab('specs')}
-            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'specs' ? 'border-amber-500 text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'specs' ? 'border-primary text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
           >
             Especificações Técnicas
           </button>
           <button
             onClick={() => setActiveTab('pdfs')}
-            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'pdfs' ? 'border-amber-500 text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'pdfs' ? 'border-primary text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
           >
             Manuais
           </button>
           <button
             onClick={() => setActiveTab('videos')}
-            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'videos' ? 'border-amber-500 text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'videos' ? 'border-primary text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
           >
             Vídeos
           </button>
           <button
             onClick={() => setActiveTab('warranty')}
-            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'warranty' ? 'border-amber-500 text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'warranty' ? 'border-primary text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
           >
             Garantia
           </button>
           <button
             onClick={() => setActiveTab('reviews')}
-            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'reviews' ? 'border-amber-500 text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`py-3 px-4 text-xs md:text-sm font-bold border-b-2 transition-all uppercase tracking-wider flex-shrink-0 ${activeTab === 'reviews' ? 'border-primary text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
           >
             Avaliações ({reviewsList.length})
           </button>
@@ -357,23 +357,31 @@ export default function ProductDetail() {
           {activeTab === 'pdfs' && (
             pdfs.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {pdfs.map((pdf, idx) => (
-                  <a
-                    key={idx}
-                    href={pdf.url.startsWith('/uploads') ? `http://localhost:5000${pdf.url}` : pdf.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-red-100 text-red-600 rounded-lg">
-                        <FileText size={20} />
+                {pdfs.map((pdf, idx) => {
+                  let formattedUrl = pdf.url || '#';
+                  if (formattedUrl.startsWith('/uploads')) {
+                    formattedUrl = `http://localhost:5000${formattedUrl}`;
+                  } else if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+                    formattedUrl = `https://${formattedUrl}`;
+                  }
+                  return (
+                    <a
+                      key={idx}
+                      href={formattedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-red-100 text-red-600 rounded-lg">
+                          <FileText size={20} />
+                        </div>
+                        <span className="text-sm font-semibold text-slate-800">{pdf.title || 'Ficha Técnica / Manual'}</span>
                       </div>
-                      <span className="text-sm font-semibold text-slate-800">{pdf.title || 'Ficha Técnica / Manual'}</span>
-                    </div>
-                    <span className="text-xs font-bold text-amber-600">Visualizar PDF</span>
-                  </a>
-                ))}
+                      <span className="text-xs font-bold text-accent">Visualizar PDF</span>
+                    </a>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-slate-400 text-sm italic">Nenhum documento PDF disponível para este item.</p>
@@ -385,22 +393,21 @@ export default function ProductDetail() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {videos.map((vid, idx) => {
                   let videoId = '';
-                  try {
-                    const url = new URL(vid.url);
-                    if (url.hostname.includes('youtube.com')) {
-                      videoId = url.searchParams.get('v') || '';
-                    } else if (url.hostname.includes('youtu.be')) {
-                      videoId = url.pathname.slice(1);
-                    }
-                  } catch (e) {
-                    console.error('Invalid video URL mapping');
+                  if (vid.url) {
+                    const match = vid.url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/);
+                    videoId = match ? match[1] : '';
+                  }
+
+                  let formattedFallbackUrl = vid.url || '#';
+                  if (formattedFallbackUrl !== '#' && !formattedFallbackUrl.startsWith('http://') && !formattedFallbackUrl.startsWith('https://')) {
+                    formattedFallbackUrl = `https://${formattedFallbackUrl}`;
                   }
 
                   return (
                     <div key={idx} className="space-y-2">
                       <p className="text-sm font-bold text-slate-800">{vid.title || 'Apresentação YouTube'}</p>
                       {videoId ? (
-                        <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                        <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-black">
                           <iframe
                             title={vid.title}
                             src={`https://www.youtube.com/embed/${videoId}`}
@@ -412,7 +419,7 @@ export default function ProductDetail() {
                         </div>
                       ) : (
                         <a 
-                          href={vid.url} 
+                          href={formattedFallbackUrl} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 text-sm font-bold text-red-600 hover:text-red-700"
@@ -474,14 +481,14 @@ export default function ProductDetail() {
                           onChange={e => setComment(e.target.value)}
                           required
                           placeholder="Escreva sua opinião sincera sobre o produto..."
-                          className="w-full text-sm p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/25 focus:border-amber-500 outline-none transition-all resize-none"
+                          className="w-full text-sm p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/25 focus:border-primary outline-none transition-all resize-none"
                         />
                       </div>
 
                       <button
                         type="submit"
                         disabled={submittingReview}
-                        className="bg-amber-500 text-slate-900 font-bold text-xs uppercase px-5 py-2.5 rounded-xl transition-all shadow hover:bg-amber-600 disabled:opacity-50"
+                        className="bg-primary/50 text-slate-900 font-bold text-xs uppercase px-5 py-2.5 rounded-xl transition-all shadow hover:bg-accent disabled:opacity-50"
                       >
                         {submittingReview ? 'Enviando...' : 'Publicar Avaliação'}
                       </button>
@@ -552,7 +559,7 @@ export default function ProductDetail() {
                     <p className="text-sm font-black text-slate-800">
                       {prod.price > 0 ? `R$ ${prod.price.toFixed(2)}` : 'Sob Consulta'}
                     </p>
-                    <Link to={`/produto/${prod.sku}`} className="text-xs font-bold text-amber-500 hover:underline">
+                    <Link to={`/produto/${prod.sku}`} className="text-xs font-bold text-primary hover:underline">
                       Ver Detalhes
                     </Link>
                   </div>

@@ -36,7 +36,7 @@ async function sendAlertEmail(config, order, user) {
     `).join('');
 
     const emailOptions = {
-      from: '"ServoSolda Notificações" <no-reply@servsolda.com.br>',
+      from: '"ServSolda Notificações" <no-reply@servsolda.com.br>',
       to: config.alertEmail,
       subject: `[Novo Orçamento] #${order.budgetNumber} - ${user.name}`,
       html: `
@@ -88,7 +88,7 @@ async function sendAlertEmail(config, order, user) {
 
           <p style="margin-top: 20px;">O PDF completo do orçamento foi gerado e salvo em: <strong>${order.pdfPath}</strong></p>
           <p style="font-size: 11px; color: #666; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px;">
-            Este é um e-mail automático gerado pelo sistema ServoSolda E-commerce.
+            Este é um e-mail automático gerado pelo sistema ServSolda E-commerce.
           </p>
         </div>
       `

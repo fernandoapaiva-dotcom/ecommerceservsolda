@@ -57,7 +57,7 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   // Fallback Route for Development API
   app.get('/', (req, res) => {
-    res.json({ message: 'ServoSolda Backend API is running successfully in development mode!' });
+    res.json({ message: 'ServSolda Backend API is running successfully in development mode!' });
   });
 }
 

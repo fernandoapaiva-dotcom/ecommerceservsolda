@@ -14,7 +14,9 @@ export default function AdminSections() {
   const [editingId, setEditingId] = useState(null);
   const [name, setName] = useState('');
   const [image, setImage] = useState('');
+  const [icon, setIcon] = useState('');
   const [active, setActive] = useState(true);
+  const [parentId, setParentId] = useState('');
 
   const fetchSections = () => {
     setLoading(true);
@@ -26,14 +28,18 @@ export default function AdminSections() {
   };
 
   useEffect(() => {
-    fetchSections();
+    navigateSectionIfRequired();
   }, []);
+
+  const navigateSectionIfRequired = () => {
+    fetchSections();
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    const body = { name, image, active };
+    const body = { name, image, icon, active, parentId: parentId || null };
     const method = editingId ? 'PUT' : 'POST';
     const url = editingId 
       ? `http://localhost:5000/api/sections/${editingId}` 
@@ -57,7 +63,9 @@ export default function AdminSections() {
       // Reset Form
       setName('');
       setImage('');
+      setIcon('');
       setActive(true);
+      setParentId('');
       setEditingId(null);
       fetchSections();
     } catch (err) {
@@ -69,7 +77,23 @@ export default function AdminSections() {
     setEditingId(section.id);
     setName(section.name);
     setImage(section.image || '');
+    setIcon(section.icon || '');
     setActive(section.active);
+    setParentId(section.parentId || '');
+  };
+
+  const handleIconUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    fetch('http://localhost:5000/api/uploads', {
+      method: 'POST',
+      body: formData
+    })
+    .then(r => r.json())
+    .then(data => setIcon(data.url))
+    .catch(err => console.error("Error uploading section icon:", err));
   };
 
   const handleDelete = async (id) => {
@@ -95,12 +119,42 @@ export default function AdminSections() {
     }
   };
 
+  const buildTree = (list) => {
+    const map = {};
+    const roots = [];
+    list.forEach(item => {
+      map[item.id] = { ...item, children: [] };
+    });
+    list.forEach(item => {
+      if (item.parentId && map[item.parentId]) {
+        map[item.parentId].children.push(map[item.id]);
+      } else {
+        roots.push(map[item.id]);
+      }
+    });
+    return roots;
+  };
+
+  const getFlattenedTree = (roots, depth = 0) => {
+    let result = [];
+    roots.forEach(node => {
+      result.push({ ...node, depth });
+      if (node.children && node.children.length > 0) {
+        result.push(...getFlattenedTree(node.children, depth + 1));
+      }
+    });
+    return result;
+  };
+
+  const treeRoots = buildTree(sections);
+  const flatSections = getFlattenedTree(treeRoots);
+
   // Reorder Sections via buttons (Drag and drop reorder logic simplified with direct Order triggers)
   const moveSection = async (index, direction) => {
     const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= sections.length) return;
+    if (newIndex < 0 || newIndex >= flatSections.length) return;
 
-    const items = [...sections];
+    const items = [...flatSections];
     const temp = items[index].order;
     
     // Swap Order attributes
@@ -162,10 +216,27 @@ export default function AdminSections() {
                   type="text"
                   required
                   placeholder="Ex: Máquinas de Solda"
-                  className="w-full text-sm px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full text-sm px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Categoria Superior (Pai)</label>
+                <select
+                  className="w-full text-sm px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                  value={parentId}
+                  onChange={(e) => setParentId(e.target.value)}
+                >
+                  <option value="">Nenhuma (Categoria Principal)</option>
+                  {sections
+                    .filter(s => s.id !== editingId)
+                    .map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))
+                  }
+                </select>
               </div>
 
               <div className="space-y-1">
@@ -173,10 +244,21 @@ export default function AdminSections() {
                 <input
                   type="text"
                   placeholder="https://images.unsplash.com..."
-                  className="w-full text-sm px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full text-sm px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                   value={image}
                   onChange={(e) => setImage(e.target.value)}
                 />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ícone da Seção (Upload)</label>
+                <input
+                  type="file"
+                  accept="image/png, image/svg+xml, image/jpeg"
+                  className="w-full text-xs px-3.5 py-1.5 border border-slate-200 rounded-xl bg-slate-50 cursor-pointer"
+                  onChange={handleIconUpload}
+                />
+                {icon && <span className="text-[10px] text-neutral block truncate">Salvo em: {icon}</span>}
               </div>
 
               <div className="flex items-center gap-2">
@@ -185,7 +267,7 @@ export default function AdminSections() {
                   id="section-active"
                   checked={active}
                   onChange={(e) => setActive(e.target.checked)}
-                  className="w-4 h-4 rounded text-amber-500 focus:ring-amber-500"
+                  className="w-4 h-4 rounded text-primary focus:ring-primary"
                 />
                 <label htmlFor="section-active" className="text-xs font-bold text-slate-600 uppercase tracking-wider cursor-pointer">
                   Categoria Ativa no Site
@@ -195,7 +277,7 @@ export default function AdminSections() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-900 font-bold py-2.5 rounded-xl text-xs transition-colors uppercase tracking-wider"
+                  className="flex-1 bg-slate-900 hover:bg-primary/50 text-white hover:text-slate-900 font-bold py-2.5 rounded-xl text-xs transition-colors uppercase tracking-wider"
                 >
                   {editingId ? 'Atualizar' : 'Criar Seção'}
                 </button>
@@ -206,7 +288,9 @@ export default function AdminSections() {
                       setEditingId(null);
                       setName('');
                       setImage('');
+                      setIcon('');
                       setActive(true);
+                      setParentId('');
                     }}
                     className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
                   >
@@ -224,23 +308,31 @@ export default function AdminSections() {
             </div>
 
             {loading ? (
-              <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
-                <RefreshCw size={20} className="animate-spin text-amber-500" />
+              <div className="flex items-center justify-center py-16 gap-3 text-neutral">
+                <RefreshCw size={20} className="animate-spin text-primary" />
                 <span className="text-xs font-semibold">Carregando seções...</span>
               </div>
-            ) : sections.length > 0 ? (
+            ) : flatSections.length > 0 ? (
               <div className="divide-y divide-slate-100">
-                {sections.map((section, idx) => (
-                  <div key={section.id} className="p-4 flex items-center justify-between text-xs hover:bg-slate-50">
+                {flatSections.map((section, idx) => (
+                  <div key={section.id} className="p-4 flex items-center justify-between text-xs hover:bg-slate-50 transition-colors" style={{ paddingLeft: `${16 + section.depth * 24}px` }}>
                     <div className="flex items-center gap-3">
                       {section.image && (
                         <div className="w-10 h-10 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                           <img src={section.image} alt={section.name} className="w-full h-full object-cover" />
                         </div>
                       )}
+                      {section.icon && (
+                        <div className="w-8 h-8 bg-slate-50 rounded-lg overflow-hidden border border-slate-200 p-1 flex items-center justify-center">
+                          <img src={`http://localhost:5000${section.icon}`} alt="" className="w-full h-full object-contain" />
+                        </div>
+                      )}
                       <div>
-                        <p className="font-bold text-slate-900">{section.name}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">Ordem: {section.order}</p>
+                        <p className="font-bold text-slate-900 flex items-center">
+                          {section.depth > 0 && <span className="text-slate-400 font-mono mr-1.5">└─ </span>}
+                          {section.name}
+                        </p>
+                        <p className="text-[10px] text-neutral mt-0.5">Ordem: {section.order}</p>
                       </div>
                     </div>
 
@@ -260,7 +352,7 @@ export default function AdminSections() {
                       </button>
                       <button
                         onClick={() => moveSection(idx, 'down')}
-                        disabled={idx === sections.length - 1}
+                        disabled={idx === flatSections.length - 1}
                         className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg disabled:opacity-30"
                       >
                         <ArrowDown size={14} />
@@ -269,7 +361,7 @@ export default function AdminSections() {
                       {/* Edit Button */}
                       <button
                         onClick={() => handleEditClick(section)}
-                        className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold rounded-lg"
+                        className="px-2.5 py-1.5 bg-primary/5 hover:bg-primary/10 text-accent font-bold rounded-lg"
                       >
                         Editar
                       </button>
@@ -287,7 +379,7 @@ export default function AdminSections() {
                 ))}
               </div>
             ) : (
-              <div className="p-12 text-center text-slate-400">
+              <div className="p-12 text-center text-neutral">
                 Nenhuma seção cadastrada.
               </div>
             )}

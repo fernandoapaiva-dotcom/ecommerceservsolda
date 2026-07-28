@@ -160,14 +160,14 @@ export default function AdminBanners() {
                   id="banner-active"
                   checked={active}
                   onChange={(e) => setActive(e.target.checked)}
-                  className="w-4 h-4 rounded text-amber-500"
+                  className="w-4 h-4 rounded text-primary"
                 />
                 <label htmlFor="banner-active" className="cursor-pointer">Banner Ativo</label>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-900 font-bold py-2.5 rounded-xl transition-colors uppercase tracking-wider text-xs"
+                className="w-full bg-slate-900 hover:bg-primary/50 text-white hover:text-slate-900 font-bold py-2.5 rounded-xl transition-colors uppercase tracking-wider text-xs"
               >
                 Criar Banner
               </button>
@@ -181,8 +181,8 @@ export default function AdminBanners() {
             </div>
 
             {loading ? (
-              <div className="flex items-center justify-center py-16 text-slate-400 gap-3">
-                <RefreshCw size={20} className="animate-spin text-amber-500" />
+              <div className="flex items-center justify-center py-16 text-neutral gap-3">
+                <RefreshCw size={20} className="animate-spin text-primary" />
                 <span className="text-xs">Carregando banners...</span>
               </div>
             ) : banners.length > 0 ? (
@@ -193,7 +193,7 @@ export default function AdminBanners() {
                     
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex flex-col justify-end p-4">
                       {banner.title && <p className="text-xs font-bold text-white leading-tight">{banner.title}</p>}
-                      {banner.link && <p className="text-[10px] text-amber-500 mt-1">{banner.link}</p>}
+                      {banner.link && <p className="text-[10px] text-primary mt-1">{banner.link}</p>}
                     </div>
 
                     <button
@@ -207,7 +207,7 @@ export default function AdminBanners() {
                 ))}
               </div>
             ) : (
-              <div className="p-12 text-center text-slate-400">
+              <div className="p-12 text-center text-neutral">
                 Nenhum banner cadastrado.
               </div>
             )}

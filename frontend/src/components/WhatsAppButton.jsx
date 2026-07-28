@@ -8,7 +8,7 @@ export default function WhatsAppButton() {
   if (!config || !config.whatsappSales) return null;
 
   const phone = config.whatsappSales.replace(/\D/g, '');
-  const defaultMsg = config.whatsappMessage || 'Olá ServoSolda! Gostaria de tirar algumas dúvidas sobre equipamentos de soldagem.';
+  const defaultMsg = config.whatsappMessage || 'Olá ServSolda! Gostaria de tirar algumas dúvidas sobre equipamentos de soldagem.';
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(defaultMsg)}`;
 
   return (

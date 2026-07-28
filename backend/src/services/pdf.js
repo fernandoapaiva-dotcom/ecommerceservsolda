@@ -37,7 +37,7 @@ async function generateBudgetPDF(order, user, config) {
       const startX = logoAdded ? 170 : 50;
       doc.fillColor('#1f2937')
         .fontSize(20)
-        .text(config.companyName || 'ServoSolda', startX, 45, { weight: 'bold' });
+        .text(config.companyName || 'ServSolda', startX, 45, { weight: 'bold' });
       
       doc.fontSize(9)
         .fillColor('#4b5563')
@@ -136,7 +136,7 @@ async function generateBudgetPDF(order, user, config) {
       doc.moveTo(50, 750).lineTo(545, 750).stroke('#e5e7eb');
       doc.fontSize(8).fillColor('#9ca3af')
         .text(`Orçamento válido por ${config.validityDays || 5} dias. Faturamento sujeito a análise de crédito.`, 50, 760, { align: 'center' })
-        .text('Agradecemos a preferência! ServoSolda - Equipamentos de Qualidade.', 50, 772, { align: 'center' });
+        .text('Agradecemos a preferência! ServSolda - Equipamentos de Qualidade.', 50, 772, { align: 'center' });
 
       doc.end();
       writeStream.on('finish', () => {

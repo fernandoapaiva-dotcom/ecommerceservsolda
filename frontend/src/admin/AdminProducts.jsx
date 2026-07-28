@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Trash2, Edit, RefreshCw, AlertCircle, Wand2 } from 'lucide-react';
+const Youtube = (props) => <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" {...props}><path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.108C19.53 3.5 12 3.5 12 3.5s-7.53 0-9.388.555A3.002 3.002 0 0 0 .502 6.163C0 8.07 0 12 0 12s0 3.93.502 5.837a3.003 3.003 0 0 0 2.11 2.108C4.47 20.5 12 20.5 12 20.5s7.53 0 9.388-.555a3.002 3.002 0 0 0 2.11-2.108C24 15.93 24 12 24 12s0-3.93-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>;
 
 export default function AdminProducts() {
   const { token } = useAuth();
@@ -38,6 +39,7 @@ export default function AdminProducts() {
   // SEO fields
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDesc, setMetaDesc] = useState('');
+  const [referenceUrl, setReferenceUrl] = useState('');
 
   const fetchProducts = () => {
     setLoading(true);
@@ -79,6 +81,7 @@ export default function AdminProducts() {
       setMetaTitle(prod.metaTitle || '');
       setMetaDesc(prod.metaDesc || '');
       setWarranty(prod.warranty || '');
+      setReferenceUrl('');
     } else {
       setEditingId(null);
       setSku('');
@@ -94,6 +97,7 @@ export default function AdminProducts() {
       setMetaTitle('');
       setMetaDesc('');
       setWarranty('');
+      setReferenceUrl('');
       if (sections.length > 0) setSectionId(sections[0].id);
     }
     setIsFormOpen(true);
@@ -114,7 +118,7 @@ export default function AdminProducts() {
           'content-type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ productName: name })
+        body: JSON.stringify({ productName: name, productUrl: referenceUrl })
       });
 
       const data = await res.json();
@@ -126,8 +130,21 @@ export default function AdminProducts() {
       setDescription(data.description || '');
       setSpecs(data.specs || []);
       setMetaDesc(data.metaDescription || '');
-      setMetaTitle(`${name} | ServoSolda`);
-      setSuccess('Descrição e especificações geradas pela inteligência artificial com sucesso! Revise os campos abaixo.');
+      setMetaTitle(`${name} | ServSolda`);
+      setWarranty(data.warranty || '');
+      if (data.sectionId) {
+        setSectionId(data.sectionId);
+      }
+      if (data.images && data.images.length > 0) {
+        setImages(data.images);
+      }
+      if (data.pdfs && data.pdfs.length > 0) {
+        setPdfs(data.pdfs);
+      }
+      if (data.videos && data.videos.length > 0) {
+        setVideos(data.videos);
+      }
+      setSuccess('Descrição, especificações, categoria, imagens com marca d\'água, PDFs de manuais e vídeos de demonstração gerados autonomamente pela IA com sucesso! Revise tudo abaixo.');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -226,7 +243,7 @@ export default function AdminProducts() {
           {!isFormOpen && (
             <button
               onClick={() => handleOpenForm()}
-              className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-900 font-bold px-4 py-2.5 rounded-xl text-xs transition-colors uppercase tracking-wider shadow"
+              className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-primary/50 text-white hover:text-slate-900 font-bold px-4 py-2.5 rounded-xl text-xs transition-colors uppercase tracking-wider shadow"
             >
               <Plus size={16} />
               <span>Novo Produto</span>
@@ -256,32 +273,53 @@ export default function AdminProducts() {
             <form onSubmit={handleSubmit} className="space-y-6 text-sm text-slate-700">
               
               {/* Product AI Description Helper Box */}
-              <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
-                  <p className="font-bold text-amber-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <div className="bg-primary/5 border border-border p-5 rounded-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-accent text-xs uppercase tracking-wider flex items-center gap-1.5">
                     <Wand2 size={14} />
-                    <span>Assistente de Descrição com IA</span>
+                    <span>Assistente de Cadastro e Importação Autônoma com IA</span>
                   </p>
-                  <p className="text-slate-600 text-xs mt-1">Preencha o "Nome do Produto", clique no botão e nós faremos a pesquisa de mercado e estruturaremos a cotação.</p>
+                  <button
+                    type="button"
+                    onClick={handleAISpecsGeneration}
+                    disabled={aiLoading}
+                    className="bg-primary/50 hover:bg-accent text-slate-900 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5"
+                  >
+                    {aiLoading ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        <span>Importando Dados...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 size={14} />
+                        <span>Preencher com IA</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAISpecsGeneration}
-                  disabled={aiLoading}
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-900 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5"
-                >
-                  {aiLoading ? (
-                    <>
-                      <RefreshCw size={14} className="animate-spin" />
-                      <span>Processando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 size={14} />
-                      <span>Gerar com IA</span>
-                    </>
-                  )}
-                </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Nome do Produto</label>
+                    <input
+                      type="text"
+                      className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl bg-white"
+                      placeholder="Ex: Rogue LHN ES 305i"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">URL do Produto no Fabricante (Opcional - Recomendado para Precisão)</label>
+                    <input
+                      type="text"
+                      className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl bg-white font-mono"
+                      placeholder="Cole o link da página do produto (ex: https://esab.com/...)"
+                      value={referenceUrl}
+                      onChange={(e) => setReferenceUrl(e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Main Fields */}
@@ -337,13 +375,45 @@ export default function AdminProducts() {
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Seção / Categoria</label>
                   <select
-                    className="w-full text-xs py-2 px-3 border border-slate-200 rounded-xl bg-white"
+                    className="w-full text-xs py-2 px-3 border border-slate-200 rounded-xl bg-white font-semibold text-slate-800"
                     value={sectionId}
                     onChange={(e) => setSectionId(e.target.value)}
                   >
-                    {sections.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
+                    {(() => {
+                      const buildTree = (list) => {
+                        const map = {};
+                        const roots = [];
+                        list.forEach(item => {
+                          map[item.id] = { ...item, children: [] };
+                        });
+                        list.forEach(item => {
+                          if (item.parentId && map[item.parentId]) {
+                            map[item.parentId].children.push(map[item.id]);
+                          } else {
+                            roots.push(map[item.id]);
+                          }
+                        });
+                        return roots;
+                      };
+
+                      const getFlattenedTree = (roots, depth = 0) => {
+                        let result = [];
+                        roots.forEach(node => {
+                          result.push({ ...node, depth });
+                          if (node.children && node.children.length > 0) {
+                            result.push(...getFlattenedTree(node.children, depth + 1));
+                          }
+                        });
+                        return result;
+                      };
+
+                      const flatSections = getFlattenedTree(buildTree(sections));
+                      return flatSections.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.depth > 0 ? '\u00A0\u00A0'.repeat(s.depth) + '└─ ' : ''}{s.name}
+                        </option>
+                      ));
+                    })()}
                   </select>
                 </div>
               </div>
@@ -372,36 +442,53 @@ export default function AdminProducts() {
               </div>
 
               {/* Photos Gallery */}
-              <div className="space-y-2 border border-slate-200 p-4 rounded-xl">
-                <p className="text-xs font-bold text-slate-900 uppercase">Imagens do Produto (URLs)</p>
-                {images.map((img, idx) => (
-                  <div key={idx} className="flex gap-2 items-center">
-                    <input
-                      type="text"
-                      className="flex-1 text-xs px-3.5 py-2 border border-slate-200 rounded-xl"
-                      value={img}
-                      onChange={(e) => {
-                        const newImages = [...images];
-                        newImages[idx] = e.target.value;
-                        setImages(newImages);
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setImages(images.filter((_, i) => i !== idx))}
-                      className="p-2 text-red-500"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setImages([...images, ''])}
-                  className="text-xs font-bold text-amber-600 uppercase mt-1"
-                >
-                  + Adicionar Foto
-                </button>
+              <div className="space-y-4 border border-slate-200 p-4 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-slate-900 uppercase">Imagens do Produto (URLs & Pré-visualização)</p>
+                  <button
+                    type="button"
+                    onClick={() => setImages([...images, ''])}
+                    className="text-xs font-bold text-accent uppercase"
+                  >
+                    + Adicionar Foto
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {images.map((img, idx) => (
+                    <div key={idx} className="flex gap-3 items-start border border-slate-100 p-3 rounded-xl bg-slate-50">
+                      {/* Live Image Preview Thumbnail */}
+                      <div className="w-16 h-16 bg-slate-200 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0 flex items-center justify-center">
+                        {img && img.startsWith('http') ? (
+                          <img src={img} alt="Preview" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-bold uppercase">Sem Foto</span>
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">URL da Imagem {idx + 1}</label>
+                        <div className="flex gap-1.5 items-center">
+                          <input
+                            type="text"
+                            className="flex-1 text-xs px-3.5 py-2 border border-slate-200 rounded-xl bg-white"
+                            value={img}
+                            onChange={(e) => {
+                              const newImages = [...images];
+                              newImages[idx] = e.target.value;
+                              setImages(newImages);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setImages(images.filter((_, i) => i !== idx))}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Technical Specifications */}
@@ -443,55 +530,159 @@ export default function AdminProducts() {
                 <button
                   type="button"
                   onClick={() => setSpecs([...specs, { key: '', value: '' }])}
-                  className="text-xs font-bold text-amber-600 uppercase mt-1"
+                  className="text-xs font-bold text-accent uppercase mt-1"
                 >
                   + Adicionar Linha
                 </button>
               </div>
 
               {/* PDF Documents */}
-              <div className="space-y-2 border border-slate-200 p-4 rounded-xl">
-                <p className="text-xs font-bold text-slate-900 uppercase">Manuais e Laudos Técnicos (PDFs)</p>
-                {pdfs.map((pdf, idx) => (
-                  <div key={idx} className="flex gap-2 items-center">
-                    <input
-                      type="text"
-                      placeholder="Título (Ex: Manual Técnico)"
-                      className="w-1/2 text-xs px-3.5 py-2 border border-slate-200 rounded-xl"
-                      value={pdf.title}
-                      onChange={(e) => {
-                        const newPdfs = [...pdfs];
-                        newPdfs[idx].title = e.target.value;
-                        setPdfs(newPdfs);
-                      }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="URL do arquivo PDF"
-                      className="w-1/2 text-xs px-3.5 py-2 border border-slate-200 rounded-xl"
-                      value={pdf.url}
-                      onChange={(e) => {
-                        const newPdfs = [...pdfs];
-                        newPdfs[idx].url = e.target.value;
-                        setPdfs(newPdfs);
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setPdfs(pdfs.filter((_, i) => i !== idx))}
-                      className="p-2 text-red-500"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setPdfs([...pdfs, { title: '', url: '' }])}
-                  className="text-xs font-bold text-amber-600 uppercase mt-1"
-                >
-                  + Adicionar PDF
-                </button>
+              <div className="space-y-4 border border-slate-200 p-4 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-slate-900 uppercase">Manuais e Laudos Técnicos (PDFs)</p>
+                  <button
+                    type="button"
+                    onClick={() => setPdfs([...pdfs, { title: '', url: '' }])}
+                    className="text-xs font-bold text-accent uppercase"
+                  >
+                    + Adicionar PDF
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {pdfs.map((pdf, idx) => (
+                    <div key={idx} className="flex flex-col md:flex-row gap-2 items-end md:items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <div className="w-full md:w-1/3 space-y-1">
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">Título</label>
+                        <input
+                          type="text"
+                          placeholder="Manual Técnico"
+                          className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl bg-white font-semibold"
+                          value={pdf.title}
+                          onChange={(e) => {
+                            const newPdfs = [...pdfs];
+                            newPdfs[idx].title = e.target.value;
+                            setPdfs(newPdfs);
+                          }}
+                        />
+                      </div>
+                      <div className="w-full md:flex-1 space-y-1">
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">URL do arquivo PDF</label>
+                        <input
+                          type="text"
+                          placeholder="https://exemplo.com/manual.pdf"
+                          className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl bg-white"
+                          value={pdf.url}
+                          onChange={(e) => {
+                            const newPdfs = [...pdfs];
+                            newPdfs[idx].url = e.target.value;
+                            setPdfs(newPdfs);
+                          }}
+                        />
+                      </div>
+                      <div className="flex gap-2 items-center pt-2 md:pt-0">
+                        {pdf.url && pdf.url.startsWith('http') && (
+                          <a
+                            href={pdf.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-lg uppercase transition-all"
+                          >
+                            Visualizar
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setPdfs(pdfs.filter((_, i) => i !== idx))}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* YouTube Videos */}
+              <div className="space-y-4 border border-slate-200 p-4 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-slate-900 uppercase">Vídeos de Demonstração (YouTube)</p>
+                  <button
+                    type="button"
+                    onClick={() => setVideos([...videos, { title: '', url: '' }])}
+                    className="text-xs font-bold text-accent uppercase"
+                  >
+                    + Adicionar Vídeo
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {videos.map((vid, idx) => {
+                    const videoId = vid.url ? vid.url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/)?.[1] : null;
+                    return (
+                      <div key={idx} className="flex flex-col md:flex-row gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 items-start">
+                        {/* Live YouTube Iframe Preview */}
+                        <div className="w-full md:w-48 aspect-video bg-slate-200 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0 flex items-center justify-center relative">
+                          {videoId ? (
+                            <iframe
+                              title={vid.title}
+                              src={`https://www.youtube.com/embed/${videoId}`}
+                              width="100%"
+                              height="100%"
+                              style={{ border: 0 }}
+                              allowFullScreen
+                            />
+                          ) : (
+                            <div className="text-[10px] text-slate-400 font-bold uppercase flex flex-col items-center gap-1.5 p-4 text-center">
+                              <Youtube size={24} className="text-slate-300" />
+                              <span>Insira uma URL do YouTube para pré-visualizar</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-3 w-full">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold text-slate-500 uppercase">Título do Vídeo</label>
+                              <input
+                                type="text"
+                                placeholder="Review do Produto"
+                                className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl bg-white"
+                                value={vid.title}
+                                onChange={(e) => {
+                                  const newVids = [...videos];
+                                  newVids[idx].title = e.target.value;
+                                  setVideos(newVids);
+                                }}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold text-slate-500 uppercase">URL do Vídeo</label>
+                              <div className="flex gap-1.5 items-center">
+                                <input
+                                  type="text"
+                                  placeholder="https://www.youtube.com/watch?v=..."
+                                  className="flex-1 text-xs px-3.5 py-2 border border-slate-200 rounded-xl bg-white"
+                                  value={vid.url}
+                                  onChange={(e) => {
+                                    const newVids = [...videos];
+                                    newVids[idx].url = e.target.value;
+                                    setVideos(newVids);
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setVideos(videos.filter((_, i) => i !== idx))}
+                                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* SEO and Tags */}
@@ -530,7 +721,7 @@ export default function AdminProducts() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-900 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider"
+                  className="bg-slate-900 hover:bg-primary/50 text-white hover:text-slate-900 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider"
                 >
                   Salvar Produto
                 </button>
@@ -548,8 +739,8 @@ export default function AdminProducts() {
             </div>
 
             {loading ? (
-              <div className="flex items-center justify-center py-20 gap-3 text-slate-400">
-                <RefreshCw size={24} className="animate-spin text-amber-500" />
+              <div className="flex items-center justify-center py-20 gap-3 text-neutral">
+                <RefreshCw size={24} className="animate-spin text-primary" />
                 <span className="text-sm font-semibold">Buscando catálogo...</span>
               </div>
             ) : products.length > 0 ? (
@@ -575,7 +766,7 @@ export default function AdminProducts() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                             prod.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' :
-                            prod.status === 'FEATURED' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+                            prod.status === 'FEATURED' ? 'bg-primary/10 text-accent' : 'bg-red-100 text-red-800'
                           }`}>
                             {prod.status}
                           </span>
@@ -583,7 +774,7 @@ export default function AdminProducts() {
                         <td className="px-6 py-4 whitespace-nowrap text-center flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleOpenForm(prod)}
-                            className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg"
+                            className="p-1.5 bg-primary/5 hover:bg-primary/10 text-accent rounded-lg"
                             title="Editar"
                           >
                             <Edit size={14} />
@@ -602,7 +793,7 @@ export default function AdminProducts() {
                 </table>
               </div>
             ) : (
-              <div className="p-12 text-center text-slate-400">
+              <div className="p-12 text-center text-neutral">
                 Nenhum produto cadastrado no catálogo.
               </div>
             )}

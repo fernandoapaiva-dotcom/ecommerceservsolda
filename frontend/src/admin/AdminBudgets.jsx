@@ -88,8 +88,8 @@ export default function AdminBudgets() {
         {/* Budgets list */}
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
           {loading ? (
-            <div className="flex items-center justify-center py-20 gap-3 text-slate-400">
-              <RefreshCw size={24} className="animate-spin text-amber-500" />
+            <div className="flex items-center justify-center py-20 gap-3 text-neutral">
+              <RefreshCw size={24} className="animate-spin text-primary" />
               <span className="text-sm font-semibold">Carregando histórico...</span>
             </div>
           ) : filteredBudgets.length > 0 ? (
@@ -114,11 +114,11 @@ export default function AdminBudgets() {
                       <td className="px-6 py-4 whitespace-nowrap font-bold text-slate-900">{b.budgetNumber}</td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-slate-900">{b.user.name}</p>
-                        <p className="text-[10px] text-slate-400">{b.user.document || 'Sem documento'}</p>
+                        <p className="text-[10px] text-neutral">{b.user.document || 'Sem documento'}</p>
                       </td>
                       <td className="px-6 py-4 text-slate-600">
                         <p>{b.user.email}</p>
-                        <p className="text-[10px] text-slate-400">{b.user.phone || 'Sem fone'}</p>
+                        <p className="text-[10px] text-neutral">{b.user.phone || 'Sem fone'}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right font-black text-slate-900">
                         R$ {b.total.toFixed(2)}
@@ -128,7 +128,7 @@ export default function AdminBudgets() {
                           <a
                             href={`http://localhost:5000${b.pdfPath}`}
                             download
-                            className="inline-flex p-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl transition-all"
+                            className="inline-flex p-2 bg-primary/10 hover:bg-primary/20 text-accent rounded-xl transition-all"
                             title="Baixar PDF"
                           >
                             <Download size={14} />
@@ -143,7 +143,7 @@ export default function AdminBudgets() {
               </table>
             </div>
           ) : (
-            <div className="p-12 text-center text-slate-400">
+            <div className="p-12 text-center text-neutral">
               Nenhum orçamento encontrado com os filtros selecionados.
             </div>
           )}

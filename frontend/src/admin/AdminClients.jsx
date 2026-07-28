@@ -51,15 +51,15 @@ export default function AdminClients() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Search size={14} className="absolute left-3 top-3.5 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-3.5 text-neutral" />
           </div>
         </div>
 
         {/* Clients Table */}
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
           {loading ? (
-            <div className="flex items-center justify-center py-20 gap-3 text-slate-400">
-              <RefreshCw size={24} className="animate-spin text-amber-500" />
+            <div className="flex items-center justify-center py-20 gap-3 text-neutral">
+              <RefreshCw size={24} className="animate-spin text-primary" />
               <span className="text-sm font-semibold">Carregando lista de clientes...</span>
             </div>
           ) : filteredClients.length > 0 ? (
@@ -79,14 +79,14 @@ export default function AdminClients() {
                     <tr key={client.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4">
                         <p className="font-bold text-slate-900">{client.name}</p>
-                        <p className="text-[10px] text-slate-400">{client.email}</p>
+                        <p className="text-[10px] text-neutral">{client.email}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-slate-700 font-semibold">{client.document || 'Não informado'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-slate-600">{client.phone || 'Não informado'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-slate-500">
                         {new Date(client.createdAt).toLocaleDateString('pt-BR')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-amber-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-accent">
                         {client._count?.orders || 0} cotação(ões)
                       </td>
                     </tr>
@@ -95,7 +95,7 @@ export default function AdminClients() {
               </table>
             </div>
           ) : (
-            <div className="p-12 text-center text-slate-400">
+            <div className="p-12 text-center text-neutral">
               Nenhum cliente cadastrado correspondente à busca.
             </div>
           )}

@@ -158,7 +158,7 @@ router.post('/', authMiddleware, async (req, res) => {
     if (!whatsappMessage) {
       const customerInfo = `*Cliente:* ${req.user.name}\n*Contato:* ${req.user.phone || req.user.email}`;
       const budgetInfo = `*Orçamento:* ${budgetNumber}\n*Total:* R$ ${updatedOrder.total.toFixed(2)}`;
-      whatsappMessage = `Olá ServoSolda! Acabei de gerar o orçamento no site:\n\n${budgetInfo}\n${customerInfo}\n\nEstou enviando o arquivo PDF em anexo para fecharmos o negócio.`;
+      whatsappMessage = `Olá ServSolda! Acabei de gerar o orçamento no site:\n\n${budgetInfo}\n${customerInfo}\n\nEstou enviando o arquivo PDF em anexo para fecharmos o negócio.`;
     } else {
       whatsappMessage = whatsappMessage
         .replace(/{budgetNumber}/g, budgetNumber)

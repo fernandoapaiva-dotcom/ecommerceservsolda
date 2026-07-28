@@ -59,11 +59,11 @@ export default function AdminLogin() {
         
         {/* Header branding */}
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 bg-amber-500/10 text-amber-500 rounded-2xl mb-2">
+          <div className="inline-flex p-3 bg-primary/10 text-primary rounded-2xl mb-2">
             <ShieldCheck size={36} />
           </div>
           <h1 className="text-xl font-black text-white uppercase tracking-wider">Acesso Administrativo</h1>
-          <p className="text-xs text-slate-400">ServoSolda E-commerce Manager</p>
+          <p className="text-xs text-neutral">ServSolda E-commerce Manager</p>
         </div>
 
         {error && (
@@ -75,13 +75,13 @@ export default function AdminLogin() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">E-mail Corporativo</label>
+            <label className="text-[10px] font-bold text-neutral uppercase tracking-wider block">E-mail Corporativo</label>
             <div className="relative">
               <input
                 type="email"
                 required
                 placeholder="nome@servsolda.com.br"
-                className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-slate-900 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-slate-900 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -91,13 +91,13 @@ export default function AdminLogin() {
 
           {/* Password */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Senha Secreta</label>
+            <label className="text-[10px] font-bold text-neutral uppercase tracking-wider block">Senha Secreta</label>
             <div className="relative">
               <input
                 type="password"
                 required
                 placeholder="••••••••"
-                className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-slate-900 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-slate-900 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -108,7 +108,7 @@ export default function AdminLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-amber-500 text-slate-900 hover:bg-amber-600 font-bold text-xs uppercase py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+            className="w-full bg-primary text-secondary hover:bg-accent font-bold text-xs uppercase py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -122,7 +122,7 @@ export default function AdminLogin() {
         </form>
 
         <div className="text-center pt-2">
-          <button onClick={() => navigate('/')} className="text-slate-400 hover:text-white text-xs underline">
+          <button onClick={() => navigate('/')} className="text-neutral hover:text-white text-xs underline">
             Voltar para o site
           </button>
         </div>

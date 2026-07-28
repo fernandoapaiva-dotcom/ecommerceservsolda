@@ -22,7 +22,7 @@ export default function Footer() {
           {/* Brand details */}
           <div className="space-y-4">
             <h3 className="text-white text-lg font-bold tracking-wider uppercase">
-              SERVO<span className="text-amber-500">SOLDA</span>
+              SERV<span className="text-primary">SOLDA</span>
             </h3>
             <p className="text-sm text-slate-500 leading-relaxed">
               Equipamentos industriais de alta performance, máquinas de solda, consumíveis e tochas. Soluções completas com atendimento especializado e pós-venda garantido.
@@ -30,17 +30,17 @@ export default function Footer() {
             {/* Social Links */}
             <div className="flex gap-4">
               {social.facebook && (
-                <a href={social.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors">
+                <a href={social.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
                   <Facebook size={20} />
                 </a>
               )}
               {social.instagram && (
-                <a href={social.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors">
+                <a href={social.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
                   <Instagram size={20} />
                 </a>
               )}
               {social.linkedin && (
-                <a href={social.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors">
+                <a href={social.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
                   <Linkedin size={20} />
                 </a>
               )}
@@ -52,16 +52,16 @@ export default function Footer() {
             <h4 className="text-white text-sm font-bold tracking-wider uppercase mb-4">Navegação</h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link to="/" className="hover:text-amber-500 transition-colors">Página Inicial</Link>
+                <Link to="/" className="hover:text-primary transition-colors">Página Inicial</Link>
               </li>
               <li>
-                <Link to="/produtos" className="hover:text-amber-500 transition-colors">Todos os Produtos</Link>
+                <Link to="/produtos" className="hover:text-primary transition-colors">Todos os Produtos</Link>
               </li>
               <li>
-                <Link to="/carrinho" className="hover:text-amber-500 transition-colors">Carrinho de Orçamento</Link>
+                <Link to="/carrinho" className="hover:text-primary transition-colors">Carrinho de Orçamento</Link>
               </li>
               <li>
-                <Link to="/privacidade" className="hover:text-amber-500 transition-colors">Política de Privacidade (LGPD)</Link>
+                <Link to="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade (LGPD)</Link>
               </li>
             </ul>
           </div>
@@ -71,14 +71,14 @@ export default function Footer() {
             <h4 className="text-white text-sm font-bold tracking-wider uppercase mb-4">Funcionamento</h4>
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-2">
-                <Clock size={16} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                <Clock size={16} className="text-primary mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-slate-300">Horários de Atendimento</p>
                   <p className="text-slate-500 text-xs mt-1">{config?.workingHours || 'Seg-Sex 08:00 - 18:00'}</p>
                 </div>
               </li>
               <li className="flex items-start gap-2">
-                <MapPin size={16} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                <MapPin size={16} className="text-primary mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-slate-300">Endereço da Loja</p>
                   <p className="text-slate-500 text-xs mt-1">{config?.address || 'Caxias do Sul - RS'}</p>
@@ -93,13 +93,13 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               {config?.phone && (
                 <li className="flex items-center gap-2">
-                  <Phone size={16} className="text-amber-500" />
+                  <Phone size={16} className="text-primary" />
                   <span>{config.phone}</span>
                 </li>
               )}
               {config?.alertEmail && (
                 <li className="flex items-center gap-2">
-                  <Mail size={16} className="text-amber-500" />
+                  <Mail size={16} className="text-primary" />
                   <span>{config.alertEmail}</span>
                 </li>
               )}
@@ -115,7 +115,7 @@ export default function Footer() {
       {/* Bottom Footer Info */}
       <div className="bg-slate-950 text-slate-600 py-6 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs">
-          <p>{config?.footerText || 'ServoSolda © Todos os direitos reservados. Design premium e robusto.'}</p>
+          <p>{config?.footerText || 'ServSolda © Todos os direitos reservados. Design premium e robusto.'}</p>
         </div>
       </div>
     </footer>

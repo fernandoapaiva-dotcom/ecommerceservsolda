@@ -13,7 +13,7 @@ async function seed() {
     await prisma.config.create({
       data: {
         id: 'singleton',
-        companyName: 'ServoSolda',
+        companyName: 'ServSolda',
         cnpj: '12.345.678/0001-99',
         address: 'Rua Principal da Soldagem, 123 - Distrito Industrial, Caxias do Sul - RS',
         phone: '(54) 3210-9876',
@@ -25,7 +25,7 @@ async function seed() {
           facebook: 'https://facebook.com/servsolda',
           linkedin: 'https://linkedin.com/company/servsolda',
         }),
-        footerText: 'ServoSolda LTDA © 2026. Todos os direitos reservados. CNPJ: 12.345.678/0001-99',
+        footerText: 'ServSolda LTDA © 2026. Todos os direitos reservados. CNPJ: 12.345.678/0001-99',
         workingHours: 'Segunda a Sexta: 08:00 às 12:00 e 13:30 às 18:00',
         erpUrl: 'http://localhost:5000/api/mock-erp',
         erpToken: 'mock-erp-secret-token-key-2026',
@@ -47,11 +47,11 @@ async function seed() {
       data: {
         email: 'admin@servsolda.com.br',
         password: hashedPassword,
-        name: 'Administrador ServoSolda',
+        name: 'Administrador ServSolda',
         role: 'ADMIN',
         document: '000.000.000-00',
         phone: '(54) 99999-9999',
-        address: 'Sede ServoSolda',
+        address: 'Sede ServSolda',
       },
     });
     console.log('Default admin user created: admin@servsolda.com.br / Admin123!');

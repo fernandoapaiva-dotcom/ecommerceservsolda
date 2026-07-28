@@ -7,25 +7,26 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Map themes to CSS custom variables injected dynamically
-        primary: {
-          500: 'var(--color-primary, #f59e0b)',
-          600: 'var(--color-accent, #d97706)',
-        },
-        slate: {
-          900: 'var(--color-secondary, #1e293b)',
-          950: 'var(--color-secondary, #0f172a)',
-        },
-        theme: {
-          primary: 'var(--color-primary, #f59e0b)',
-          secondary: 'var(--color-secondary, #1e293b)',
-          accent: 'var(--color-accent, #d97706)',
-          background: 'var(--color-background, #f8fafc)',
-          surface: 'var(--color-surface, #ffffff)',
-          text: 'var(--color-text, #0f172a)',
-          textMuted: 'var(--color-textMuted, #64748b)',
-          border: 'var(--color-border, #e2e8f0)',
-        }
+        primary: 'var(--color-primary)',
+        secondary: 'var(--color-secondary)',
+        accent: 'var(--color-accent)',
+        background: 'var(--color-background)',
+        surface: 'var(--color-surface)',
+        textColor: 'var(--color-text)',
+        text: 'var(--color-text)',
+        textMuted: 'var(--color-textMuted)',
+        borderColor: 'var(--color-border)',
+        border: 'var(--color-border)',
+        neutral: 'var(--color-neutral)',
+        adminSidebarBg: 'var(--color-adminSidebarBg)',
+        adminSidebarText: 'var(--color-adminSidebarText)',
+        adminSidebarActiveBg: 'var(--color-adminSidebarActiveBg)',
+        headerBg: 'var(--color-headerBg)',
+        headerText: 'var(--color-headerText)',
+        navBg: 'var(--color-navBg)',
+        navText: 'var(--color-navText)',
+        searchBg: 'var(--color-searchBg)',
+        searchText: 'var(--color-searchText)',
       }
     },
   },

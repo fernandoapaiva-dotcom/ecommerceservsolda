@@ -1,6 +1,6 @@
-# ServoSolda — E-commerce B2B/B2C & Orçamentos via WhatsApp
+# ServSolda — E-commerce B2B/B2C & Orçamentos via WhatsApp
 
-Plataforma de e-commerce completa e otimizada para a **ServoSolda**, com fluxo de orçamentos integrado ao WhatsApp, alertas automáticos por e-mail para o administrador, sincronização de estoque com ERP Softsystem e painel administrativo para gerenciamento de catálogo, banners, categorias e personalização de tema visual com Inteligência Artificial.
+Plataforma de e-commerce completa e otimizada para a **ServSolda**, com fluxo de orçamentos integrado ao WhatsApp, alertas automáticos por e-mail para o administrador, sincronização de estoque com ERP Softsystem e painel administrativo para gerenciamento de catálogo, banners, categorias e personalização de tema visual com Inteligência Artificial.
 
 ---
 

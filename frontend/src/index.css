@@ -11,6 +11,16 @@
   --color-text: #0f172a;
   --color-textMuted: #64748b;
   --color-border: #e2e8f0;
+  --color-neutral: #94a3b8;
+  --color-adminSidebarBg: #0f172a;
+  --color-adminSidebarText: #cbd5e1;
+  --color-adminSidebarActiveBg: #f59e0b;
+  --color-headerBg: #0f172a;
+  --color-headerText: #ffffff;
+  --color-navBg: #1e293b;
+  --color-navText: #ffffff;
+  --color-searchBg: #1e293b;
+  --color-searchText: #94a3b8;
 }
 
 @layer base {

@@ -22,7 +22,7 @@ export default function Checkout() {
     return (
       <div className="max-w-xl mx-auto my-16 text-center space-y-4">
         <h2 className="text-xl font-bold text-slate-800">Seu carrinho está vazio</h2>
-        <Link to="/carrinho" className="inline-block bg-amber-500 text-slate-900 font-bold px-6 py-2 rounded-full text-xs">
+        <Link to="/carrinho" className="inline-block bg-primary/50 text-slate-900 font-bold px-6 py-2 rounded-full text-xs">
           Voltar ao Carrinho
         </Link>
       </div>
@@ -123,7 +123,7 @@ export default function Checkout() {
               </div>
 
               <div className="text-xs text-slate-400">
-                * Para alterar estes dados cadastrais, acesse a sua <Link to="/painel" className="text-amber-600 hover:underline">Área do Cliente</Link> antes de finalizar.
+                * Para alterar estes dados cadastrais, acesse a sua <Link to="/painel" className="text-accent hover:underline">Área do Cliente</Link> antes de finalizar.
               </div>
             </div>
 
@@ -133,7 +133,7 @@ export default function Checkout() {
               <textarea
                 rows="4"
                 placeholder="Insira detalhes adicionais sobre prazo de entrega, faturamento corporativo B2B ou tochas especiais..."
-                className="w-full text-sm p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full text-sm p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
@@ -157,7 +157,7 @@ export default function Checkout() {
             <div className="border-t border-slate-100 pt-4 space-y-3">
               <div className="flex justify-between font-black text-slate-900 text-sm">
                 <span>TOTAL GERAL</span>
-                <span className="text-amber-600 text-base">R$ {getSubtotal().toFixed(2)}</span>
+                <span className="text-accent text-base">R$ {getSubtotal().toFixed(2)}</span>
               </div>
             </div>
 
@@ -170,7 +170,7 @@ export default function Checkout() {
             <button
               onClick={handleGenerateBudget}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-900 font-bold py-3.5 rounded-xl transition-all shadow-md uppercase tracking-wider text-xs"
+              className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-primary/50 text-white hover:text-slate-900 font-bold py-3.5 rounded-xl transition-all shadow-md uppercase tracking-wider text-xs"
             >
               {loading ? (
                 <>
@@ -201,11 +201,11 @@ export default function Checkout() {
             </p>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200/60 p-5 rounded-2xl space-y-3.5 max-w-md mx-auto text-left">
-            <p className="text-xs text-amber-800 leading-relaxed font-bold">
+          <div className="bg-primary/5 border border-border/60 p-5 rounded-2xl space-y-3.5 max-w-md mx-auto text-left">
+            <p className="text-xs text-accent leading-relaxed font-bold">
               Instruções para Finalização:
             </p>
-            <ol className="list-decimal list-inside text-xs text-amber-900 space-y-2 leading-relaxed">
+            <ol className="list-decimal list-inside text-xs text-accent space-y-2 leading-relaxed">
               <li>Clique no botão abaixo para <strong>Baixar o PDF do Orçamento</strong> oficial.</li>
               <li>Em seguida, clique em <strong>Enviar para o Vendedor (WhatsApp)</strong>.</li>
               <li>Apresente o arquivo PDF gerado ao vendedor no WhatsApp para fecharem o negócio.</li>
@@ -236,7 +236,7 @@ export default function Checkout() {
           <div className="border-t border-slate-100 pt-6">
             <Link
               to="/painel"
-              className="text-xs font-bold text-slate-500 hover:text-amber-600 transition-colors uppercase tracking-wider inline-flex items-center gap-1"
+              className="text-xs font-bold text-slate-500 hover:text-accent transition-colors uppercase tracking-wider inline-flex items-center gap-1"
             >
               <ArrowLeft size={14} />
               <span>Ver meus Orçamentos anteriores</span>

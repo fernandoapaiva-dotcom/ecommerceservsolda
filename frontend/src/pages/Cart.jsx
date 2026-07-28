@@ -124,17 +124,17 @@ export default function Cart() {
               </div>
               <div className="border-t border-slate-100 pt-3 flex justify-between font-black text-slate-900 text-base">
                 <span>TOTAL ESTIMADO</span>
-                <span className="text-amber-600">R$ {getSubtotal().toFixed(2)}</span>
+                <span className="text-accent">R$ {getSubtotal().toFixed(2)}</span>
               </div>
             </div>
 
-            <div className="bg-amber-50 p-4 rounded-xl border border-amber-200/60 text-xs text-amber-800 leading-relaxed">
+            <div className="bg-primary/5 p-4 rounded-xl border border-border/60 text-xs text-accent leading-relaxed">
               <strong>Atenção:</strong> Nenhuma transação financeira é finalizada no site. Ao prosseguir, geraremos um orçamento oficial em PDF e abriremos o WhatsApp para finalização direta com nossos consultores de vendas.
             </div>
 
             <button
               onClick={handleCheckoutRedirect}
-              className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-900 font-bold py-3.5 rounded-xl transition-all shadow-md uppercase tracking-wider text-xs"
+              className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-primary/50 text-white hover:text-slate-900 font-bold py-3.5 rounded-xl transition-all shadow-md uppercase tracking-wider text-xs"
             >
               <span>{user ? 'Prosseguir para Checkout' : 'Fazer Login para Prosseguir'}</span>
               <ArrowRight size={16} />
@@ -142,7 +142,7 @@ export default function Cart() {
 
             <Link
               to="/produtos"
-              className="block text-center text-xs font-bold text-slate-500 hover:text-amber-600 transition-colors py-2 uppercase tracking-wider"
+              className="block text-center text-xs font-bold text-slate-500 hover:text-accent transition-colors py-2 uppercase tracking-wider"
             >
               Continuar Adicionando
             </Link>
@@ -160,7 +160,7 @@ export default function Cart() {
           </div>
           <Link
             to="/produtos"
-            className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-6 py-3 rounded-full text-xs tracking-wider uppercase transition-all"
+            className="inline-flex items-center gap-2 bg-primary/50 hover:bg-accent text-slate-900 font-bold px-6 py-3 rounded-full text-xs tracking-wider uppercase transition-all"
           >
             <span>Ver Produtos</span>
             <ChevronRight size={16} />

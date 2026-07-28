@@ -20,7 +20,7 @@ export default function NotFound() {
       <div>
         <Link
           to="/"
-          className="inline-block bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-900 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all"
+          className="inline-block bg-slate-900 hover:bg-primary/50 text-white hover:text-slate-900 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all"
         >
           Voltar para Home
         </Link>

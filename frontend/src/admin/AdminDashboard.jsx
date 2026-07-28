@@ -64,18 +64,18 @@ export default function AdminDashboard() {
         {/* Title */}
         <div>
           <h1 className="text-2xl font-black text-slate-900 uppercase">Dashboard Geral</h1>
-          <p className="text-slate-500 text-xs">Informações gerais e logs do sistema ServoSolda</p>
+          <p className="text-slate-500 text-xs">Informações gerais e logs do sistema ServSolda</p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
+            <div className="p-3 bg-primary/10 text-accent rounded-xl">
               <Package size={24} />
             </div>
             <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Produtos</p>
+              <p className="text-xs text-neutral font-bold uppercase tracking-wider">Produtos</p>
               <p className="text-2xl font-black text-slate-900 mt-1">{stats.products}</p>
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function AdminDashboard() {
               <Users size={24} />
             </div>
             <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Clientes</p>
+              <p className="text-xs text-neutral font-bold uppercase tracking-wider">Clientes</p>
               <p className="text-2xl font-black text-slate-900 mt-1">{stats.clients}</p>
             </div>
           </div>
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
               <FileText size={24} />
             </div>
             <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Orçamentos</p>
+              <p className="text-xs text-neutral font-bold uppercase tracking-wider">Orçamentos</p>
               <p className="text-2xl font-black text-slate-900 mt-1">{stats.budgets}</p>
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
               <Activity size={24} />
             </div>
             <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Seções</p>
+              <p className="text-xs text-neutral font-bold uppercase tracking-wider">Seções</p>
               <p className="text-2xl font-black text-slate-900 mt-1">{stats.sections}</p>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
             <span className="font-bold text-slate-900 text-sm uppercase tracking-wider">Logs Sincronização Softsystem ERP</span>
-            <span className="text-xs text-slate-400">Últimas 5 execuções</span>
+            <span className="text-xs text-neutral">Últimas 5 execuções</span>
           </div>
 
           {syncLogs.length > 0 ? (
@@ -127,14 +127,14 @@ export default function AdminDashboard() {
                     <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${log.status === 'SUCCESS' ? 'bg-emerald-500' : 'bg-red-500'}`} />
                     <span className="text-slate-700 font-semibold">{log.message}</span>
                   </div>
-                  <span className="text-slate-400 whitespace-nowrap">
+                  <span className="text-neutral whitespace-nowrap">
                     {new Date(log.createdAt).toLocaleString('pt-BR')}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
+            <div className="p-12 text-center text-neutral flex flex-col items-center justify-center gap-2">
               <AlertCircle size={20} className="text-slate-300" />
               <span className="text-sm">Nenhum log de sincronização registrado ainda.</span>
             </div>

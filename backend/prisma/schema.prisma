@@ -28,8 +28,12 @@ model Section {
   id          String    @id @default(uuid())
   name        String
   image       String?   // Banner/Cover URL
+  icon        String?   // Category icon path or URL
   order       Int       @default(0)
   active      Boolean   @default(true)
+  parentId    String?
+  parent      Section?  @relation("SectionSubsections", fields: [parentId], references: [id], onDelete: Cascade)
+  subsections Section[] @relation("SectionSubsections")
   products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -85,20 +89,27 @@ model Order {
 model Config {
   id                  String   @id @default("singleton")
   logo                String?  // Logo image path or URL
-  companyName         String   @default("ServoSolda")
+  favicon             String?  // Favicon image path or URL
+  companyName         String   @default("ServSolda")
   cnpj                String   @default("")
   address             String   @default("")
+  cep                 String   @default("")
+  addressNumber       String   @default("")
+  addressComplement   String   @default("")
+  city                String   @default("")
+  state               String   @default("")
+  googleMapsEmbedUrl  String   @default("")
   phone               String   @default("")
   whatsappSales       String   @default("") //wa.me destination phone (e.g. 5511999999999)
   alertEmail          String   @default("")
   validityDays        Int      @default(5)
   socialLinks         String   @default("{}") // JSON string of platforms and links
-  footerText          String   @default("ServoSolda © Todos os direitos reservados")
+  footerText          String   @default("ServSolda © Todos os direitos reservados")
   workingHours        String   @default("Seg-Sex 08:00 - 18:00")
   erpUrl              String   @default("")
   erpToken            String   @default("")
   erpSyncMinutes      Int      @default(15)
-  themeColors         String   @default("{\"primary\":\"#f59e0b\",\"secondary\":\"#1e293b\",\"accent\":\"#d97706\",\"background\":\"#f8fafc\",\"surface\":\"#ffffff\",\"text\":\"#0f172a\",\"textMuted\":\"#64748b\",\"border\":\"#e2e8f0\"}")
+  themeColors         String   @default("{\"primary\":\"#f59e0b\",\"secondary\":\"#1e293b\",\"accent\":\"#d97706\",\"background\":\"#f8fafc\",\"surface\":\"#ffffff\",\"text\":\"#0f172a\",\"textMuted\":\"#64748b\",\"border\":\"#e2e8f0\",\"neutral\":\"#94a3b8\",\"adminSidebarBg\":\"#0f172a\",\"adminSidebarText\":\"#cbd5e1\",\"adminSidebarActiveBg\":\"#f59e0b\",\"headerBg\":\"#0f172a\",\"headerText\":\"#ffffff\",\"navBg\":\"#1e293b\",\"navText\":\"#ffffff\",\"searchBg\":\"#1e293b\",\"searchText\":\"#94a3b8\"}")
   pdfNotes            String   @default("")
   installmentCount    Int      @default(10)
   installmentInterest Boolean  @default(false)

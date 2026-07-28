@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const prisma = require('../models/db');
 const { authMiddleware, adminMiddleware } = require('../middlewares/auth');
 
@@ -12,11 +13,26 @@ router.get('/', async (req, res) => {
     const where = {};
 
     if (sectionId) {
-      where.sectionId = sectionId;
+      // Find all child subcategories recursively to include products in nested subgroups
+      const allSectionIds = [sectionId];
+      const getSubcategories = async (parentId) => {
+        const subcategories = await prisma.section.findMany({
+          where: { parentId },
+          select: { id: true }
+        });
+        for (const sub of subcategories) {
+          allSectionIds.push(sub.id);
+          await getSubcategories(sub.id);
+        }
+      };
+      await getSubcategories(sectionId);
+      where.sectionId = { in: allSectionIds };
     }
 
     if (status) {
-      where.status = status;
+      if (status !== 'ALL') {
+        where.status = status;
+      }
     } else {
       // Default: clients see ACTIVE & FEATURED. Admins can view INACTIVE.
       where.status = { in: ['ACTIVE', 'FEATURED'] };
@@ -252,4 +268,152 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
+// Firebird Services & Multer
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+const { restoreFbkToFdb, queryFirebirdDatabase, normalizeErpRecords, applyErpProductsToDb } = require('../services/firebirdSync');
+const fs = require('fs');
+
+// POST /api/products/sync-firebird (Admin) - Conecta no banco Firebird .FDB
+router.post('/sync-firebird', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const config = await prisma.config.findUnique({ where: { id: 'singleton' } });
+    const database = req.body.databasePath || (config ? config.erpUrl : null);
+
+    if (!database) {
+      return res.status(400).json({ error: 'Caminho do banco Firebird (.FDB) não informado.' });
+    }
+
+    const host = req.body.host || '127.0.0.1';
+    const port = req.body.port ? parseInt(req.body.port) : 3050;
+    const user = req.body.user || 'SYSDBA';
+    const password = req.body.password || 'masterkey';
+    const createIfMissing = req.body.createIfMissing === true;
+
+    console.log(`[Firebird Sync] Conectando em ${host}:${port} - ${database}`);
+
+    const rawRecords = await queryFirebirdDatabase({
+      host,
+      port,
+      database,
+      user,
+      password
+    });
+
+    const normalized = normalizeErpRecords(rawRecords);
+    const result = await applyErpProductsToDb(normalized, createIfMissing);
+
+    return res.json({
+      message: 'Sincronização com Firebird executada com sucesso!',
+      ...result
+    });
+  } catch (error) {
+    console.error('[Firebird Sync Error]', error);
+    return res.status(500).json({ error: error.message || 'Erro ao sincronizar com banco Firebird' });
+  }
+});
+
+// POST /api/products/import-erp-file (Admin) - Processa upload de arquivo de backup (.FBK, .FDB, .CSV, .TXT, .JSON, .XML)
+router.post('/import-erp-file', authMiddleware, adminMiddleware, upload.single('file'), async (req, res) => {
+  let filePath = req.file?.path;
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+    }
+
+    const originalName = req.file.originalname.toLowerCase();
+    const ext = path.extname(req.file.originalname) || (originalName.endsWith('.fbk') ? '.fbk' : '.fdb');
+    const namedFilePath = req.file.path + ext;
+    fs.renameSync(req.file.path, namedFilePath);
+    filePath = namedFilePath;
+
+    const createIfMissing = req.body.createIfMissing === 'true' || req.body.createIfMissing === true;
+    const onlyWebExport = req.body.onlyWebExport === 'true' || req.body.onlyWebExport === true;
+
+    let normalizedRecords = [];
+
+    if (originalName.endsWith('.fbk')) {
+      // Aguarda 1 segundo para o Windows/Node liberar a trava de escrita do Multer no disco
+      await new Promise(r => setTimeout(r, 1000));
+      // Arquivo de backup compactado do Firebird (.FBK) -> restaura em um .FDB temporário via gbak.exe
+      const absPath = path.resolve(filePath);
+      const tempFdbPath = restoreFbkToFdb(absPath);
+      try {
+        const rawRecords = await queryFirebirdDatabase({ database: tempFdbPath, onlyWebExport });
+        normalizedRecords = normalizeErpRecords(rawRecords);
+      } finally {
+        try { fs.unlinkSync(tempFdbPath); } catch (e) {}
+      }
+
+    } else if (originalName.endsWith('.fdb') || originalName.endsWith('.gdb')) {
+      // É um arquivo de banco de dados Firebird enviado via upload!
+      const absPath = path.resolve(filePath);
+      const rawRecords = await queryFirebirdDatabase({
+        database: absPath,
+        onlyWebExport
+      });
+      normalizedRecords = normalizeErpRecords(rawRecords);
+
+    } else if (originalName.endsWith('.json')) {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const parsed = JSON.parse(content);
+      const records = Array.isArray(parsed) ? parsed : (parsed.products || parsed.items || [parsed]);
+      normalizedRecords = normalizeErpRecords(records);
+
+    } else {
+      // Trata como CSV, TXT ou relatório delimitado por ;, , ou TAB
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const lines = content.split(/\r?\n/).filter(line => line.trim() !== '');
+
+      if (lines.length > 0) {
+        // Detecta separador (;, , ou tab)
+        const headerLine = lines[0];
+        let delimiter = ';';
+        if (headerLine.includes(';') && !headerLine.includes(',')) delimiter = ';';
+        else if (headerLine.includes(',') && !headerLine.includes(';')) delimiter = ',';
+        else if (headerLine.includes('\t')) delimiter = '\t';
+
+        const headers = headerLine.split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
+
+        const parsedRows = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(delimiter).map(c => c.trim().replace(/^["']|["']$/g, ''));
+          if (cols.length === 0 || (cols.length === 1 && !cols[0])) continue;
+
+          const rowObj = {};
+          headers.forEach((h, idx) => {
+            rowObj[h] = cols[idx] || '';
+          });
+          parsedRows.push(rowObj);
+        }
+
+        normalizedRecords = normalizeErpRecords(parsedRows);
+      }
+    }
+
+    // Remove o arquivo temporário após o parsing
+    try { fs.unlinkSync(filePath); } catch (e) {}
+
+    if (normalizedRecords.length === 0) {
+      return res.status(400).json({ error: 'Nenhum registro válido de produto encontrado no arquivo.' });
+    }
+
+    const result = await applyErpProductsToDb(normalizedRecords, createIfMissing);
+
+    return res.json({
+      message: `Importação de ${originalName} realizada com sucesso!`,
+      fileName: req.file.originalname,
+      ...result
+    });
+
+  } catch (error) {
+    if (req.file && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+    }
+    console.error('[Import ERP File Error]', error);
+    return res.status(500).json({ error: error.message || 'Erro ao processar arquivo do ERP.' });
+  }
+});
+
 module.exports = router;
+

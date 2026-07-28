@@ -82,7 +82,7 @@ export default function ClientDashboard() {
       <div className="bg-slate-900 text-white rounded-3xl p-8 relative overflow-hidden shadow-lg">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.1),transparent)]"></div>
         <div className="relative space-y-2">
-          <p className="text-xs font-bold text-amber-500 uppercase tracking-widest">Painel de Controle</p>
+          <p className="text-xs font-bold text-primary uppercase tracking-widest">Painel de Controle</p>
           <h1 className="text-3xl font-black tracking-tight leading-none uppercase">Área do Cliente</h1>
           <p className="text-slate-400 text-sm mt-1">Bem-vindo, {user?.name}! Gerencie seus dados cadastrais e veja o histórico de orçamentos.</p>
         </div>
@@ -94,13 +94,13 @@ export default function ClientDashboard() {
         <div className="space-y-2 bg-white p-4 border border-slate-200 rounded-2xl shadow-sm h-fit">
           <button
             onClick={() => setActiveTab('orders')}
-            className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold uppercase transition-colors ${activeTab === 'orders' ? 'bg-amber-500 text-slate-900' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
+            className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold uppercase transition-colors ${activeTab === 'orders' ? 'bg-primary/50 text-slate-900' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
           >
             Histórico de Orçamentos
           </button>
           <button
             onClick={() => setActiveTab('profile')}
-            className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold uppercase transition-colors ${activeTab === 'profile' ? 'bg-amber-500 text-slate-900' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
+            className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold uppercase transition-colors ${activeTab === 'profile' ? 'bg-primary/50 text-slate-900' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
           >
             Dados Cadastrais
           </button>
@@ -118,7 +118,7 @@ export default function ClientDashboard() {
 
               {loadingBudgets ? (
                 <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
-                  <RefreshCw size={24} className="animate-spin text-amber-500" />
+                  <RefreshCw size={24} className="animate-spin text-primary" />
                   <span className="text-sm font-semibold">Carregando cotações...</span>
                 </div>
               ) : budgets.length > 0 ? (
@@ -157,7 +157,7 @@ export default function ClientDashboard() {
                                 <a
                                   href={`http://localhost:5000${b.pdfPath}`}
                                   download
-                                  className="inline-flex p-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl transition-all"
+                                  className="inline-flex p-2 bg-primary/10 hover:bg-primary/20 text-accent rounded-xl transition-all"
                                   title="Baixar PDF"
                                 >
                                   <Download size={16} />
@@ -204,7 +204,7 @@ export default function ClientDashboard() {
                     <input
                       type="text"
                       required
-                      className="w-full text-sm px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full text-sm px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                     />
@@ -215,7 +215,7 @@ export default function ClientDashboard() {
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Documento (CPF / CNPJ)</label>
                     <input
                       type="text"
-                      className="w-full text-sm px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full text-sm px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       value={document}
                       onChange={(e) => setDocument(e.target.value)}
                     />
@@ -226,7 +226,7 @@ export default function ClientDashboard() {
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Telefone</label>
                     <input
                       type="text"
-                      className="w-full text-sm px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full text-sm px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                     />
@@ -237,7 +237,7 @@ export default function ClientDashboard() {
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Endereço Completo</label>
                     <input
                       type="text"
-                      className="w-full text-sm px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full text-sm px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                     />
@@ -249,7 +249,7 @@ export default function ClientDashboard() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-900 font-bold px-6 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider"
+                    className="bg-slate-900 hover:bg-primary/50 text-white hover:text-slate-900 font-bold px-6 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider"
                   >
                     {saving ? 'Salvando...' : 'Salvar Alterações'}
                   </button>

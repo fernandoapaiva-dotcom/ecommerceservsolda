@@ -7,7 +7,7 @@ export default function PrivacyPolicy() {
       
       {/* Policy Title */}
       <div className="text-center space-y-3">
-        <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+        <div className="w-12 h-12 bg-primary/10 text-accent rounded-2xl flex items-center justify-center mx-auto shadow-sm">
           <Shield size={24} />
         </div>
         <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Política de Privacidade</h1>
@@ -25,7 +25,7 @@ export default function PrivacyPolicy() {
             <span>1. Controle e Tratamento dos Dados</span>
           </h2>
           <p>
-            A <strong>ServoSolda LTDA</strong>, inscrita sob CNPJ 12.345.678/0001-99, atua como controladora do processamento de dados para esta plataforma de orçamentos e cotações. Os dados de login manuais e através do Google OAuth são criptografados e armazenados com segurança, com o único objetivo de estruturar a emissão da proposta comercial (PDF).
+            A <strong>ServSolda LTDA</strong>, inscrita sob CNPJ 12.345.678/0001-99, atua como controladora do processamento de dados para esta plataforma de orçamentos e cotações. Os dados de login manuais e através do Google OAuth são criptografados e armazenados com segurança, com o único objetivo de estruturar a emissão da proposta comercial (PDF).
           </p>
         </div>
 
@@ -62,7 +62,7 @@ export default function PrivacyPolicy() {
             <span>4. Seus Direitos (Artigo 18 da LGPD)</span>
           </h2>
           <p>
-            O usuário tem total direito de solicitar a alteração dos seus dados, a eliminação definitiva da sua conta dos servidores ServoSolda ou a portabilidade. Para qualquer requisição legal de privacidade, entre em contato via e-mail <code>vendas@servsolda.com.br</code>.
+            O usuário tem total direito de solicitar a alteração dos seus dados, a eliminação definitiva da sua conta dos servidores ServSolda ou a portabilidade. Para qualquer requisição legal de privacidade, entre em contato via e-mail <code>vendas@servsolda.com.br</code>.
           </p>
         </div>
 
@@ -73,7 +73,7 @@ export default function PrivacyPolicy() {
 
 function CheckIcon() {
   return (
-    <span className="w-5 h-5 bg-amber-100 text-amber-600 rounded-md flex items-center justify-center flex-shrink-0">
+    <span className="w-5 h-5 bg-primary/10 text-accent rounded-md flex items-center justify-center flex-shrink-0">
       <Scale size={12} />
     </span>
   );

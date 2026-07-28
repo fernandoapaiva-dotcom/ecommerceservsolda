@@ -106,7 +106,7 @@ export default function ProductsList() {
         {/* Filters Sidebar */}
         <div className="space-y-6 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-fit">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3 text-slate-950 font-bold uppercase text-sm">
-            <SlidersHorizontal size={18} className="text-amber-500" />
+            <SlidersHorizontal size={18} className="text-primary" />
             <span>Filtros & Busca</span>
           </div>
 
@@ -117,7 +117,7 @@ export default function ProductsList() {
               <input
                 type="text"
                 placeholder="Ex: MIG-250..."
-                className="w-full text-sm pl-3 pr-10 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full text-sm pl-3 pr-10 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -131,7 +131,7 @@ export default function ProductsList() {
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ordenar por</label>
             <select
-              className="w-full text-sm py-2 px-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full text-sm py-2 px-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary"
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
             >
@@ -176,7 +176,7 @@ export default function ProductsList() {
         <div className="lg:col-span-3">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4 text-slate-400">
-              <RefreshCw size={36} className="animate-spin text-amber-500" />
+              <RefreshCw size={36} className="animate-spin text-primary" />
               <p className="text-sm font-semibold">Buscando catálogo no banco...</p>
             </div>
           ) : products.length > 0 ? (
@@ -204,7 +204,7 @@ export default function ProductsList() {
 
                       <div className="p-5 space-y-2">
                         <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">{product.section?.name}</p>
-                        <h3 className="text-base font-bold text-slate-900 line-clamp-2 group-hover:text-amber-600 transition-colors">
+                        <h3 className="text-base font-bold text-slate-900 line-clamp-2 group-hover:text-accent transition-colors">
                           {product.name}
                         </h3>
                         <p className="text-xs text-slate-400">SKU: {product.sku}</p>
@@ -220,7 +220,7 @@ export default function ProductsList() {
                       </div>
                       <Link
                         to={`/produto/${product.sku}`}
-                        className="bg-slate-950 hover:bg-amber-500 text-white hover:text-slate-900 p-2.5 rounded-xl transition-colors shadow-sm"
+                        className="bg-slate-950 hover:bg-primary/50 text-white hover:text-slate-900 p-2.5 rounded-xl transition-colors shadow-sm"
                       >
                         <Eye size={18} />
                       </Link>

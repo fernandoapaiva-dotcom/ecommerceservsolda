@@ -105,13 +105,13 @@ export default function AuthPage() {
         <div className="flex border-b border-slate-100">
           <button
             onClick={() => setIsLogin(true)}
-            className={`w-1/2 pb-3 font-bold text-sm transition-all uppercase tracking-wider ${isLogin ? 'border-b-2 border-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`w-1/2 pb-3 font-bold text-sm transition-all uppercase tracking-wider ${isLogin ? 'border-b-2 border-primary text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
           >
             Entrar
           </button>
           <button
             onClick={() => setIsLogin(false)}
-            className={`w-1/2 pb-3 font-bold text-sm transition-all uppercase tracking-wider ${!isLogin ? 'border-b-2 border-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`w-1/2 pb-3 font-bold text-sm transition-all uppercase tracking-wider ${!isLogin ? 'border-b-2 border-primary text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
           >
             Criar Conta
           </button>
@@ -135,7 +135,7 @@ export default function AuthPage() {
                     type="text"
                     required
                     placeholder="João da Silva LTDA"
-                    className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -150,7 +150,7 @@ export default function AuthPage() {
                   <input
                     type="text"
                     placeholder="12.345.678/0001-90"
-                    className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                     value={document}
                     onChange={(e) => setDocument(e.target.value)}
                   />
@@ -165,7 +165,7 @@ export default function AuthPage() {
                   <input
                     type="text"
                     placeholder="(54) 99999-9999"
-                    className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
@@ -180,7 +180,7 @@ export default function AuthPage() {
                   <input
                     type="text"
                     placeholder="Rua das Inversoras, 456 - Caxias do Sul - RS"
-                    className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                   />
@@ -198,7 +198,7 @@ export default function AuthPage() {
                 type="email"
                 required
                 placeholder="vendas@empresa.com"
-                className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -214,7 +214,7 @@ export default function AuthPage() {
                 type="password"
                 required
                 placeholder="••••••••"
-                className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full text-sm pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -225,7 +225,7 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-900 font-bold py-3 rounded-xl transition-all shadow-md mt-4 text-sm uppercase tracking-wider"
+            className="w-full bg-slate-900 hover:bg-primary/50 text-white hover:text-slate-900 font-bold py-3 rounded-xl transition-all shadow-md mt-4 text-sm uppercase tracking-wider"
           >
             {loading ? 'Processando...' : isLogin ? 'Acessar Conta' : 'Criar minha Conta'}
           </button>
@@ -244,7 +244,7 @@ export default function AuthPage() {
             disabled={loading}
             className="w-full flex items-center justify-center gap-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-all text-xs uppercase tracking-wider border border-slate-200"
           >
-            <Chrome size={16} className="text-amber-500" />
+            <Chrome size={16} className="text-primary" />
             <span>Entrar com Google</span>
           </button>
           
