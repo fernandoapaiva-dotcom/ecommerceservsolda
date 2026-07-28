@@ -105,6 +105,37 @@ async function downloadAndWatermark(imageUrl, logoRelativePath) {
   }
 }
 
+// Bing Image HD Crawler for real high-res e-commerce product photos
+async function crawlHdProductImages(productName, logoRelativePath) {
+  console.log(`[HD Image Agent] Buscando fotos HD de e-commerce para: ${productName}`);
+  const hdImages = [];
+  try {
+    const res = await axios.get(`https://www.bing.com/images/async?q=${encodeURIComponent(productName + ' foto produto')}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      timeout: 8000
+    });
+
+    const matches = [...res.data.matchAll(/murl&quot;:&quot;(https?:[^&]+)&quot;/gi)].map(m => m[1]);
+    const filteredCandidates = matches.filter(url => 
+      !url.includes('youtube.com') && !url.includes('ytimg.com') && 
+      !url.includes('logo') && !url.includes('favicon') && !url.includes('icon')
+    );
+
+    for (const candUrl of filteredCandidates) {
+      if (hdImages.length >= 4) break;
+      const localPath = await downloadAndWatermark(candUrl, logoRelativePath);
+      if (localPath) {
+        hdImages.push(`http://localhost:5000${localPath}`);
+      }
+    }
+  } catch (err) {
+    console.warn(`[HD Image Agent Warning] Bing search failed: ${err.message}`);
+  }
+  return hdImages;
+}
+
 // Download PDF locally to local server uploads folder
 async function downloadPdfLocally(pdfUrl, defaultTitle) {
   if (!pdfUrl || !pdfUrl.startsWith('http')) return null;
@@ -399,15 +430,23 @@ JSON esperado:
   const watermarkedImages = [];
   if (parsedResult.recommendedImages && Array.isArray(parsedResult.recommendedImages)) {
     for (const imgUrl of parsedResult.recommendedImages) {
-      if (imgUrl && imgUrl.startsWith('http')) {
+      if (imgUrl && imgUrl.startsWith('http') && !imgUrl.includes('youtube.com') && !imgUrl.includes('ytimg.com')) {
         console.log(`Downloading and applying watermark to image: ${imgUrl}`);
         const localPath = await downloadAndWatermark(imgUrl, logoRelativePath);
         if (localPath) {
           watermarkedImages.push(`http://localhost:5000${localPath}`);
-        } else {
-          console.log(`Watermark failed or blocked. Falling back to remote URL: ${imgUrl}`);
-          watermarkedImages.push(imgUrl);
         }
+      }
+    }
+  }
+
+  // Fallback: If AI returned few or broken images, use HD Bing Image Crawler
+  if (watermarkedImages.length < 2) {
+    console.log(`[Visual RAG] Executando crawler de imagens HD para garantir fotos em múltiplos ângulos...`);
+    const hdImages = await crawlHdProductImages(productName, logoRelativePath);
+    for (const img of hdImages) {
+      if (!watermarkedImages.includes(img)) {
+        watermarkedImages.push(img);
       }
     }
   }
