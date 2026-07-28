@@ -112,11 +112,19 @@ export default function ProductDetail() {
         </Link>
       </div>
     );
-  }
+  const formatMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('/uploads')) {
+      return `http://localhost:5000${url}`;
+    }
+    return url;
+  };
 
-  const images = JSON.parse(product.images || '[]');
+  const rawImages = JSON.parse(product.images || '[]');
+  const images = rawImages.map(formatMediaUrl).filter(Boolean);
   const specs = JSON.parse(product.specs || '[]');
-  const pdfs = JSON.parse(product.pdfs || '[]');
+  const rawPdfs = JSON.parse(product.pdfs || '[]');
+  const pdfs = rawPdfs.map(p => ({ ...p, url: formatMediaUrl(p.url) }));
   const videos = JSON.parse(product.videos || '[]');
 
   // Schema.org Structured Data
@@ -403,11 +411,23 @@ export default function ProductDetail() {
                     : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(product.name)}`;
 
                   return (
-                    <div key={idx} className="space-y-3 bg-slate-50 p-4 border border-slate-200 rounded-2xl">
-                      <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-red-600"></span>
-                        {vid.title || `Demonstração Técnica - ${product.name}`}
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-red-600"></span>
+                          {vid.title || `Demonstração Técnica - ${product.name}`}
+                        </p>
+                        {videoId && (
+                          <a
+                            href={`https://www.youtube.com/watch?v=${videoId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-bold text-red-600 hover:underline flex items-center gap-1"
+                          >
+                            <Youtube size={14} />
+                            <span>Abrir no YouTube</span>
+                          </a>
+                        )}
+                      </div>
                       <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-black">
                         <iframe
                           title={vid.title || 'Vídeo de Demonstração'}
