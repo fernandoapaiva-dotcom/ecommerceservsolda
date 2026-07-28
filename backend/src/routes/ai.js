@@ -3,7 +3,7 @@ const axios = require('axios');
 const prisma = require('../models/db');
 const { authMiddleware, adminMiddleware } = require('../middlewares/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const Jimp = require('jimp');
+const { Jimp } = require('jimp');
 const path = require('path');
 const fs = require('fs');
 
@@ -160,27 +160,49 @@ async function resolveRedirectUrl(url) {
   return url;
 }
 
-// Validate YouTube URL with oEmbed and relevance check
+// Validate YouTube URL with oEmbed and fallback YouTube search
 async function validateYoutubeVideo(url, defaultTitle, productName = '') {
-  if (!url) return null;
-  // Reject Rickroll or generic test video IDs
-  if (url.includes('dQw4w9WgXcQ')) return null;
-
-  const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/);
-  if (!match) return null;
-  const id = match[1];
-  try {
-    const res = await axios.get(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`, { timeout: 4000 });
-    if (res.status === 200 && res.data && res.data.title) {
-      const titleLower = res.data.title.toLowerCase();
-      // Ensure title is not music/meme and relates to tools/welding/brand
-      if (!titleLower.includes('official music video') && !titleLower.includes('remix') && !titleLower.includes('song')) {
-        return { title: res.data.title || defaultTitle, url: `https://www.youtube.com/watch?v=${id}` };
+  if (url && !url.includes('dQw4w9WgXcQ')) {
+    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/);
+    if (match) {
+      const id = match[1];
+      try {
+        const res = await axios.get(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`, { timeout: 4000 });
+        if (res.status === 200 && res.data && res.data.title) {
+          const titleLower = res.data.title.toLowerCase();
+          if (!titleLower.includes('music video') && !titleLower.includes('remix') && !titleLower.includes('song')) {
+            return { title: res.data.title || defaultTitle, url: `https://www.youtube.com/watch?v=${id}` };
+          }
+        }
+      } catch (err) {
+        console.warn(`YouTube oEmbed verification failed for ID ${id}: ${err.message}`);
       }
     }
-  } catch (err) {
-    console.warn(`YouTube oEmbed verification failed for ID ${id}: ${err.message}`);
   }
+
+  // Fallback: Perform YouTube search for real public embeddable video
+  if (productName) {
+    try {
+      const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(productName)}`;
+      const res = await axios.get(searchUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        timeout: 5000
+      });
+      const matches = [...res.data.matchAll(/"videoId":"([^"]{11})"/g)].map(m => m[1]);
+      const uniqueIds = [...new Set(matches)];
+      for (const vidId of uniqueIds.slice(0, 5)) {
+        try {
+          const oRes = await axios.get(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${vidId}&format=json`, { timeout: 3000 });
+          if (oRes.status === 200 && oRes.data && oRes.data.title) {
+            return { title: oRes.data.title, url: `https://www.youtube.com/watch?v=${vidId}` };
+          }
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.warn(`YouTube fallback search failed: ${err.message}`);
+    }
+  }
+
   return null;
 }
 
