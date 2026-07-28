@@ -50,60 +50,98 @@ async function searchWeb(query) {
 // Download image and overlay store logo as watermark
 async function downloadAndWatermark(imageUrl, logoRelativePath) {
   try {
-    // 1. Fetch the image
     const urlObj = new URL(imageUrl);
     const response = await axios.get(imageUrl, { 
       responseType: 'arraybuffer', 
-      timeout: 10000,
+      timeout: 12000,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
         'Referer': `${urlObj.protocol}//${urlObj.hostname}/`
       }
     });
+
     const productBuffer = Buffer.from(response.data);
-    
-    // 2. Load with Jimp
-    const productImg = await Jimp.read(productBuffer);
-    
-    // 3. Apply watermark if logo exists
-    if (logoRelativePath) {
-      const logoAbsolutePath = path.join(__dirname, '..', '..', logoRelativePath);
-      if (fs.existsSync(logoAbsolutePath)) {
-        const logoImg = await Jimp.read(logoAbsolutePath);
-        
-        // Resize logo to 18% of the product image width
-        const targetWidth = Math.floor(productImg.getWidth() * 0.18);
-        logoImg.resize(targetWidth, Jimp.AUTO);
-        
-        // Position at bottom-right corner with 15px padding
-        const x = productImg.getWidth() - logoImg.getWidth() - 15;
-        const y = productImg.getHeight() - logoImg.getHeight() - 15;
-        
-        // Blend logo onto image with 65% opacity
-        productImg.composite(logoImg, x, y, {
-          mode: Jimp.BLEND_SOURCE_OVER,
-          opacitySource: 0.65
-        });
-      }
-    }
-    
-    // 4. Save to uploads folder
-    const filename = `watermarked-${Date.now()}-${Math.floor(Math.random() * 1000000)}.jpg`;
-    const outputRelativePath = `/uploads/${filename}`;
+    if (!productBuffer || productBuffer.length < 1000) return null;
+
     const outputDirectory = path.join(__dirname, '..', '..', 'uploads');
-    
     if (!fs.existsSync(outputDirectory)) {
       fs.mkdirSync(outputDirectory, { recursive: true });
     }
-    
-    const outputAbsolutePath = path.join(outputDirectory, filename);
-    await productImg.quality(85).writeAsync(outputAbsolutePath);
-    
-    return outputRelativePath;
+
+    try {
+      const productImg = await Jimp.read(productBuffer);
+      if (logoRelativePath) {
+        const logoAbsolutePath = path.join(__dirname, '..', '..', logoRelativePath);
+        if (fs.existsSync(logoAbsolutePath)) {
+          const logoImg = await Jimp.read(logoAbsolutePath);
+          const targetWidth = Math.floor(productImg.getWidth() * 0.18);
+          logoImg.resize(targetWidth, Jimp.AUTO);
+          const x = productImg.getWidth() - logoImg.getWidth() - 15;
+          const y = productImg.getHeight() - logoImg.getHeight() - 15;
+          productImg.composite(logoImg, x, y, {
+            mode: Jimp.BLEND_SOURCE_OVER,
+            opacitySource: 0.65
+          });
+        }
+      }
+      const filename = `watermarked-${Date.now()}-${Math.floor(Math.random() * 1000000)}.jpg`;
+      const outputAbsolutePath = path.join(outputDirectory, filename);
+      await productImg.quality(85).writeAsync(outputAbsolutePath);
+      return `/uploads/${filename}`;
+    } catch (jimpErr) {
+      // Direct raw binary fallback for WebP or unhandled formats so images always save locally
+      const ext = imageUrl.includes('.webp') ? 'webp' : 'jpg';
+      const filename = `product-${Date.now()}-${Math.floor(Math.random() * 1000000)}.${ext}`;
+      const outputAbsolutePath = path.join(outputDirectory, filename);
+      fs.writeFileSync(outputAbsolutePath, productBuffer);
+      console.log(`Saved raw image to /uploads/${filename}`);
+      return `/uploads/${filename}`;
+    }
+
   } catch (err) {
-    console.error('Failed to watermark image:', imageUrl, err.message);
+    console.error('Failed to download image:', imageUrl, err.message);
     return null;
   }
+}
+
+// Download PDF locally to local server uploads folder
+async function downloadPdfLocally(pdfUrl, defaultTitle) {
+  if (!pdfUrl || !pdfUrl.startsWith('http')) return null;
+  try {
+    const urlObj = new URL(pdfUrl);
+    console.log(`[PDF Agent] Baixando manual em PDF para o servidor local: ${pdfUrl}`);
+    const response = await axios.get(pdfUrl, {
+      responseType: 'arraybuffer',
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,application/pdf,*/*;q=0.8',
+        'Referer': `${urlObj.protocol}//${urlObj.hostname}/`
+      }
+    });
+
+    if (response.status === 200 && response.data.length > 2000) {
+      const filename = `manual-${Date.now()}-${Math.floor(Math.random() * 10000)}.pdf`;
+      const outputDirectory = path.join(__dirname, '..', '..', 'uploads');
+      if (!fs.existsSync(outputDirectory)) {
+        fs.mkdirSync(outputDirectory, { recursive: true });
+      }
+      const outputAbsolutePath = path.join(outputDirectory, filename);
+      fs.writeFileSync(outputAbsolutePath, Buffer.from(response.data));
+      console.log(`[PDF Agent] PDF salvo com SUCESSO em /uploads/${filename}`);
+      return {
+        title: defaultTitle || 'Manual Técnico de Instruções (PDF)',
+        url: `/uploads/${filename}`
+      };
+    }
+  } catch (err) {
+    console.warn(`[PDF Agent Warning] Download local do PDF falhou para ${pdfUrl}: ${err.message}`);
+  }
+  return {
+    title: defaultTitle || 'Manual Técnico de Instruções (PDF)',
+    url: pdfUrl
+  };
 }
 
 // Resolve Google Search redirects to real destination URLs
@@ -146,7 +184,7 @@ async function validateYoutubeVideo(url, defaultTitle, productName = '') {
   return null;
 }
 
-// Validate PDF URL with a fast HEAD request and reject doc viewers
+// Validate PDF URL with a fast GET request and reject doc viewers
 async function validatePdfUrl(url, title) {
   if (!url) return null;
   const lowerUrl = url.toLowerCase();
@@ -154,16 +192,19 @@ async function validatePdfUrl(url, title) {
   if (lowerUrl.includes('scribd.com') || lowerUrl.includes('docero.com')) return null;
 
   try {
-    const res = await axios.head(url, { 
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-      timeout: 4000 
+    const res = await axios.get(url, { 
+      headers: { 
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
+      },
+      timeout: 5000 
     });
     if (res.status >= 200 && res.status < 400) {
       return { title: title || 'Manual Técnico de Instruções (PDF)', url };
     }
   } catch (err) {
-    if (err.response && err.response.status === 403) {
-      return { title: title || 'Manual Técnico de Instruções (PDF)', url }; // treat as valid if hotlink-blocked but existing
+    if (err.response && (err.response.status === 403 || err.response.status === 406)) {
+      return { title: title || 'Manual Técnico de Instruções (PDF)', url }; // treat as valid if protected by WAF
     }
   }
   if (lowerUrl.endsWith('.pdf') || lowerUrl.includes('.pdf?')) {
@@ -349,18 +390,20 @@ JSON esperado:
     }
   }
 
-  // Validate and clean up PDFs
+  // Validate and download PDFs locally to server
   const validPdfs = [];
   if (parsedResult.recommendedPdfs && Array.isArray(parsedResult.recommendedPdfs)) {
     for (const pdfItem of parsedResult.recommendedPdfs) {
       const validated = await validatePdfUrl(pdfItem.url, pdfItem.title);
       if (validated) {
-        validPdfs.push(validated);
+        const localPdf = await downloadPdfLocally(validated.url, validated.title);
+        if (localPdf) validPdfs.push(localPdf);
       }
     }
   }
   if (validPdfs.length === 0) {
-    validPdfs.push({
+    const localPdfFallback = await downloadPdfLocally(brandManualFallback, `Manual Técnico de Instruções ${nameLower.includes('boxer') ? 'Boxer Soldas' : 'do Fabricante'} (PDF)`);
+    validPdfs.push(localPdfFallback || {
       title: `Manual Técnico de Instruções ${nameLower.includes('boxer') ? 'Boxer Soldas' : 'do Fabricante'} (PDF)`,
       url: brandManualFallback
     });

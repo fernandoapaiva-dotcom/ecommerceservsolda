@@ -398,36 +398,27 @@ export default function ProductDetail() {
                     videoId = match ? match[1] : '';
                   }
 
-                  let formattedFallbackUrl = vid.url || '#';
-                  if (formattedFallbackUrl !== '#' && !formattedFallbackUrl.startsWith('http://') && !formattedFallbackUrl.startsWith('https://')) {
-                    formattedFallbackUrl = `https://${formattedFallbackUrl}`;
-                  }
+                  const embedSrc = videoId 
+                    ? `https://www.youtube.com/embed/${videoId}` 
+                    : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(product.name)}`;
 
                   return (
-                    <div key={idx} className="space-y-2">
-                      <p className="text-sm font-bold text-slate-800">{vid.title || 'Apresentação YouTube'}</p>
-                      {videoId ? (
-                        <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-black">
-                          <iframe
-                            title={vid.title}
-                            src={`https://www.youtube.com/embed/${videoId}`}
-                            width="100%"
-                            height="100%"
-                            style={{ border: 0 }}
-                            allowFullScreen
-                          />
-                        </div>
-                      ) : (
-                        <a 
-                          href={formattedFallbackUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm font-bold text-red-600 hover:text-red-700"
-                        >
-                          <Youtube size={16} />
-                          <span>Assistir vídeo no YouTube</span>
-                        </a>
-                      )}
+                    <div key={idx} className="space-y-3 bg-slate-50 p-4 border border-slate-200 rounded-2xl">
+                      <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-600"></span>
+                        {vid.title || `Demonstração Técnica - ${product.name}`}
+                      </p>
+                      <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-black">
+                        <iframe
+                          title={vid.title || 'Vídeo de Demonstração'}
+                          src={embedSrc}
+                          width="100%"
+                          height="100%"
+                          style={{ border: 0 }}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
                     </div>
                   );
                 })}
