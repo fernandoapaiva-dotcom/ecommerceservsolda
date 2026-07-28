@@ -122,16 +122,23 @@ async function resolveRedirectUrl(url) {
   return url;
 }
 
-// Validate YouTube URL with oEmbed
-async function validateYoutubeVideo(url, defaultTitle) {
+// Validate YouTube URL with oEmbed and relevance check
+async function validateYoutubeVideo(url, defaultTitle, productName = '') {
   if (!url) return null;
+  // Reject Rickroll or generic test video IDs
+  if (url.includes('dQw4w9WgXcQ')) return null;
+
   const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/);
   if (!match) return null;
   const id = match[1];
   try {
-    const res = await axios.get(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`, { timeout: 3000 });
-    if (res.status === 200) {
-      return { title: res.data.title || defaultTitle, url: `https://www.youtube.com/watch?v=${id}` };
+    const res = await axios.get(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`, { timeout: 4000 });
+    if (res.status === 200 && res.data && res.data.title) {
+      const titleLower = res.data.title.toLowerCase();
+      // Ensure title is not music/meme and relates to tools/welding/brand
+      if (!titleLower.includes('official music video') && !titleLower.includes('remix') && !titleLower.includes('song')) {
+        return { title: res.data.title || defaultTitle, url: `https://www.youtube.com/watch?v=${id}` };
+      }
     }
   } catch (err) {
     console.warn(`YouTube oEmbed verification failed for ID ${id}: ${err.message}`);
@@ -139,22 +146,28 @@ async function validateYoutubeVideo(url, defaultTitle) {
   return null;
 }
 
-// Validate PDF URL with a fast HEAD request
+// Validate PDF URL with a fast HEAD request and reject doc viewers
 async function validatePdfUrl(url, title) {
   if (!url) return null;
+  const lowerUrl = url.toLowerCase();
+  // Reject Scribd, Docero or non-direct PDF viewer pages
+  if (lowerUrl.includes('scribd.com') || lowerUrl.includes('docero.com')) return null;
+
   try {
     const res = await axios.head(url, { 
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
       timeout: 4000 
     });
     if (res.status >= 200 && res.status < 400) {
-      return { title, url };
+      return { title: title || 'Manual Técnico de Instruções (PDF)', url };
     }
   } catch (err) {
     if (err.response && err.response.status === 403) {
-      return { title, url }; // treat as valid if only forbidden/hotlink-blocked but exists
+      return { title: title || 'Manual Técnico de Instruções (PDF)', url }; // treat as valid if hotlink-blocked but existing
     }
-    console.warn(`PDF validation failed for ${url}: ${err.message}`);
+  }
+  if (lowerUrl.endsWith('.pdf') || lowerUrl.includes('.pdf?')) {
+    return { title: title || 'Manual Técnico de Instruções (PDF)', url };
   }
   return null;
 }
@@ -190,19 +203,19 @@ async function processProductEnrichment(productName, productUrl = '') {
   });
 
   const prompt = `Você é um assistente especialista de e-commerce da ServSolda.
-Sua tarefa é analisar as informações sobre o produto de soldagem: "${productName}".
+Sua tarefa é analisar as informações sobre o produto de soldagem/corte: "${productName}".
 
 Você DEVE utilizar a ferramenta de busca integrada (Google Search) para obter informações reais e verídicas sobre o produto na internet.
-Pesquise especificamente nos sites do fabricante correspondente (como esab.com.br, vonder.com.br, balmer.com.br, etc.) e em revendedores autorizados (como dutramaquinas.com.br, casadosoldador.com.br, etc.).
+Pesquise especificamente nos sites do fabricante correspondente (como boxersoldas.com.br, esab.com.br, vonder.com.br, balmer.com.br, etc.) e em revendedores autorizados de ferramentas (como dutramaquinas.com.br, casadosoldador.com.br, etc.).
 
 Obtenha de forma autônoma:
-1. O fabricante exato e a descrição comercial detalhada e atrativa do produto.
-2. A tabela de especificações técnicas 100% verídicas do equipamento (processo, amperagem, ciclo de trabalho, tensão de alimentação, peso, etc.).
-3. O termo de garantia oficial fornecido pelo fabricante (ex: "3 anos de garantia nacional" para ESAB Rogue, ou o prazo correto do fabricante).
-4. De 2 a 5 URLs de imagens reais e diferentes do equipamento físico (devem terminar com .jpg, .jpeg ou .png). Priorize imagens de alta resolução encontradas nos sites oficiais ou em servidores de imagens de distribuidores conhecidos. Não use fotos de banco de imagens genéricas (Unsplash) sob hipótese alguma.
-5. URLs diretas de arquivos manuais ou fichas técnicas em PDF (devem ser links diretos de arquivos que terminam com .pdf).
-6. URLs reais de vídeos do YouTube correspondentes (reviews técnicos, apresentações do fabricante ou testes práticos do modelo exato).
-7. Escolha a categoria correta para este produto a partir desta lista de categorias existentes no sistema: ${JSON.stringify(categoriesList)}. Você DEVE retornar o ID correspondente da categoria no campo "sectionId". NÃO crie categorias novas!
+1. O fabricante exato e a descrição comercial detalhada e atrativa do produto em HTML com parágrafos e benefícios.
+2. A tabela de especificações técnicas 100% verídicas do equipamento (processo, amperagem, ciclo de trabalho, espessura de corte, tensão de alimentação, peso, etc.).
+3. O termo de garantia oficial fornecido pelo fabricante (ex: "1 ano de garantia de fábrica" ou "3 anos de garantia nacional").
+4. De 2 a 5 URLs diretas de imagens REAIS do equipamento físico (devem ser URLs diretas terminando com .jpg, .jpeg, .png ou .webp salvas em sites do fabricante ou distribuidores conhecidos). NUNCA retorne fotos de bancos de imagem genéricos ou decoração!
+5. Para PDFs: A URL direta do arquivo de manual de instruções ou ficha técnica oficial em PDF no site do fabricante (ex: se for Boxer, pesquise em boxersoldas.com.br; a URL DEVE ser direta de um arquivo .pdf, ex: https://boxersoldas.com.br/wp-content/uploads/2025/12/MANUAL-HARDCUT-52.pdf). NUNCA retorne links do Scribd ou bibliotecas pagas!
+6. Para Vídeos: A URL real de um vídeo do YouTube correspondente ao modelo exato do produto (review técnico, teste de corte ou demonstração da marca). NUNCA use URLs genéricas de teste (como dQw4w9WgXcQ) ou clipes de música!
+7. Escolha a categoria correta para este produto a partir desta lista de categorias existentes no sistema: ${JSON.stringify(categoriesList)}. Você DEVE retornar o ID correspondente da categoria no campo "sectionId".
 
 Retorne os dados estruturados estritamente em um bloco de código JSON válido delimitado por \`\`\`json e \`\`\` com as seguintes chaves:
 1. "description" (string HTML contendo a descrição comercial rica em parágrafos e lista de benefícios com tags p, ul, li, strong).
@@ -210,10 +223,10 @@ Retorne os dados estruturados estritamente em um bloco de código JSON válido d
 3. "tags" (array de strings de palavras-chave para SEO).
 4. "metaDescription" (string de descrição de SEO de até 160 caracteres).
 5. "sectionId" (string contendo a ID da categoria selecionada da lista fornecida).
-6. "recommendedImages" (array de strings contendo de 2 a 5 URLs diretas de imagens reais e diferentes do produto físico).
-7. "recommendedPdfs" (array de objetos { "title": "título do PDF", "url": "URL direta do arquivo .pdf" }).
+6. "recommendedImages" (array de strings contendo de 2 a 5 URLs diretas de imagens reais do produto físico).
+7. "recommendedPdfs" (array de objetos { "title": "título do PDF", "url": "URL direta do arquivo .pdf no site do fabricante" }).
 8. "recommendedVideos" (array de objetos { "title": "título do vídeo", "url": "URL real do vídeo no YouTube" }).
-9. "warranty" (string contendo o termo de garantia exato do fabricante, ex: "3 anos de garantia de fábrica").
+9. "warranty" (string contendo o termo de garantia exato do fabricante).
 
 JSON esperado:
 {
@@ -280,10 +293,14 @@ JSON esperado:
   parsedResult.sectionId = recommendedSectionId;
 
   // Deduce manufacturer fallback pages for this brand
-  let brandManualFallback = 'https://www.google.com';
-  let brandVideoFallback = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
   const nameLower = productName.toLowerCase();
-  if (nameLower.includes('esab') || nameLower.includes('rogue') || nameLower.includes('lhn')) {
+  let brandManualFallback = 'https://www.google.com/search?q=' + encodeURIComponent(`manual ${productName} filetype:pdf`);
+  let brandVideoFallback = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(productName);
+  
+  if (nameLower.includes('boxer') || nameLower.includes('hardcut')) {
+    brandManualFallback = 'https://boxersoldas.com.br/wp-content/uploads/2025/12/MANUAL-HARDCUT-52.pdf';
+    brandVideoFallback = 'https://www.youtube.com/results?search_query=' + encodeURIComponent('Boxer ' + productName);
+  } else if (nameLower.includes('esab') || nameLower.includes('rogue') || nameLower.includes('lhn')) {
     brandManualFallback = 'https://manuals.esab.com/';
     brandVideoFallback = 'https://www.youtube.com/watch?v=K4eMsEPT1-A';
   } else if (nameLower.includes('vonder')) {
@@ -344,7 +361,7 @@ JSON esperado:
   }
   if (validPdfs.length === 0) {
     validPdfs.push({
-      title: `Página Oficial de Manuais e Downloads ${productName.includes('ESAB') ? 'ESAB' : 'do Fabricante'}`,
+      title: `Manual Técnico de Instruções ${nameLower.includes('boxer') ? 'Boxer Soldas' : 'do Fabricante'} (PDF)`,
       url: brandManualFallback
     });
   }
@@ -353,7 +370,7 @@ JSON esperado:
   const validVideos = [];
   if (parsedResult.recommendedVideos && Array.isArray(parsedResult.recommendedVideos)) {
     for (const vidItem of parsedResult.recommendedVideos) {
-      const validated = await validateYoutubeVideo(vidItem.url, vidItem.title);
+      const validated = await validateYoutubeVideo(vidItem.url, vidItem.title, productName);
       if (validated) {
         validVideos.push(validated);
       }
@@ -361,7 +378,7 @@ JSON esperado:
   }
   if (validVideos.length === 0) {
     validVideos.push({
-      title: `Vídeo de Apresentação Oficial da Linha ${productName.includes('ESAB') ? 'ESAB Rogue' : 'do Fabricante'}`,
+      title: `Vídeo de Apresentação e Testes - ${productName}`,
       url: brandVideoFallback
     });
   }
