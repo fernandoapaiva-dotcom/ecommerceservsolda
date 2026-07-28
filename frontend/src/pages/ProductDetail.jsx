@@ -170,9 +170,13 @@ export default function ProductDetail() {
         <div className="space-y-4">
           <div className="aspect-square w-full md:h-96 bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative flex items-center justify-center">
             <img
-              src={images[activeImageIdx] || 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80'}
+              src={images[activeImageIdx]}
               alt={product.name}
               className="max-w-full max-h-full object-contain transition-all duration-300 p-4"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://cdn-icons-png.flaticon.com/512/3596/3596091.png';
+              }}
             />
             {product.stock <= 0 && (
               <div className="absolute top-4 left-4 bg-red-600 text-white text-xs font-black tracking-widest px-3 py-1 rounded-full uppercase shadow">
@@ -188,9 +192,17 @@ export default function ProductDetail() {
                 <button
                   key={idx}
                   onClick={() => setActiveImageIdx(idx)}
-                  className={`w-16 h-16 bg-white rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 flex items-center justify-center p-1 ${activeImageIdx === idx ? 'border-primary' : 'border-slate-200'}`}
+                  className={`w-20 h-20 bg-white rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 flex items-center justify-center p-1.5 ${activeImageIdx === idx ? 'border-primary ring-2 ring-primary/20' : 'border-slate-200 hover:border-slate-300'}`}
                 >
-                  <img src={img} alt={`thumbnail-${idx}`} className="max-w-full max-h-full object-contain" />
+                  <img
+                    src={img}
+                    alt={`thumbnail-${idx}`}
+                    className="max-w-full max-h-full object-contain"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://cdn-icons-png.flaticon.com/512/3596/3596091.png';
+                    }}
+                  />
                 </button>
               ))}
             </div>
