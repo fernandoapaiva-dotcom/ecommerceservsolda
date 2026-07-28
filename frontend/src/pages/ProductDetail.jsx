@@ -112,6 +112,8 @@ export default function ProductDetail() {
         </Link>
       </div>
     );
+  }
+
   const formatMediaUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('/uploads')) {
