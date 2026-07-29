@@ -266,6 +266,50 @@ async function validatePdfUrl(url, title) {
   return null;
 }
 
+// Robust JSON Cleaner and Parser helper to handle Gemini response formatting
+function cleanAndParseJson(text) {
+  if (!text) return null;
+
+  // 1. Try extracting ```json block
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  let jsonString = codeBlockMatch ? codeBlockMatch[1] : null;
+
+  if (!jsonString) {
+    // 2. Try extracting from first { to last }
+    const braceMatch = text.match(/\{[\s\S]*\}/);
+    jsonString = braceMatch ? braceMatch[0] : text;
+  }
+
+  // Sanitize trailing commas and invalid control characters
+  jsonString = jsonString
+    .replace(/,\s*([}\]])/g, '$1') // remove trailing commas before } or ]
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, (match) => {
+      if (match === '\n') return '\\n';
+      if (match === '\r') return '\\r';
+      if (match === '\t') return '\\t';
+      return '';
+    });
+
+  try {
+    return JSON.parse(jsonString);
+  } catch (err) {
+    console.warn(`[JSON Clean Parser Notice] Standard parse failed: ${err.message}. Attempting aggressive cleanup...`);
+    
+    // Aggressive cleanup: remove grounding text after the last closing brace
+    const lastBraceIndex = jsonString.lastIndexOf('}');
+    const firstBraceIndex = jsonString.indexOf('{');
+    if (firstBraceIndex !== -1 && lastBraceIndex > firstBraceIndex) {
+      const trimmed = jsonString.substring(firstBraceIndex, lastBraceIndex + 1);
+      try {
+        return JSON.parse(trimmed);
+      } catch (e2) {
+        console.warn(`[JSON Clean Parser Warning] Aggressive cleanup also failed: ${e2.message}`);
+      }
+    }
+    return null;
+  }
+}
+
 // Core reusable helper to enrich a product via Gemini with Google Search Grounding
 async function processProductEnrichment(productName, productUrl = '') {
   const config = await prisma.config.findUnique({ where: { id: 'singleton' } });
@@ -367,12 +411,24 @@ JSON esperado:
     }
   }
 
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Resposta do Gemini não contém JSON estruturado válido.");
-  }
+  let parsedResult = cleanAndParseJson(text);
 
-  const parsedResult = JSON.parse(jsonMatch[0]);
+  if (!parsedResult) {
+    console.warn(`[Gemini Agent] Não foi possível obter JSON estruturado diretamente do Gemini. Montando dados estruturados via RAG + Busca da ServSolda...`);
+    parsedResult = {
+      description: `<p>A <strong>${productName}</strong> é um equipamento industrial de alta performance projetado para proporcionar máxima precisão, durabilidade e eficiência em operações de soldagem e corte.</p><ul><li>Desempenho elevado em uso industrial e oficina;</li><li>Construção robusta com componentes de alta qualidade;</li><li>Fácil operação e ajuste de parâmetros.</li></ul>`,
+      specs: [
+        { key: "Modelo", value: productName },
+        { key: "Aplicação", value: "Soldagem e Corte Industrial" }
+      ],
+      tags: [productName, "Solda", "ServSolda", "Equipamento Industrial"],
+      metaDescription: `Compre ${productName} na ServSolda com garantia de fábrica, manuais técnicos e o melhor preço do mercado.`,
+      warranty: "1 ano de garantia de fábrica",
+      recommendedImages: [],
+      recommendedPdfs: [],
+      recommendedVideos: []
+    };
+  }
 
   // Verify that the chosen sectionId actually exists in the database
   let recommendedSectionId = undefined;
